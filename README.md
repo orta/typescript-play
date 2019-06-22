@@ -1,18 +1,8 @@
 # [TypeScript playground](https://typescript-play.js.org)
 
-A better TypeScript playground.
+A better TypeScript playground, forked from Agent Cooper for [typescriptlang.org](https://www.typescriptlang.org/play)
 
-Website: https://typescript-play.js.org.
-
-Differences from https://www.typescriptlang.org/play:
-
-* All strict options turned on by default
-* More available compiler options
-* Ability to switch TypeScript version
-* More space for code
-* More examples
-* Quicker sharing, URL updates as you type
-* Shorter sharing URLs
+This branch is meant to be a hold-over until we get a new website up and running where it's integration will be different.
 
 ## Getting started
 
