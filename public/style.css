@@ -4,20 +4,30 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font: normal 16px/1.4em -apple-system, system-ui, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
-    "Helvetica Neue", Arial, sans-serif;
+  font: normal 16px/1.4em -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+    "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif;
   text-rendering: optimizeLegibility;
 }
 
-header {
-  display: flex;
-  background-color: #294e80;
-  color: white;
+body p,
+body span,
+body ul li,
+body ol li {
+  font-size: 1em;
+  line-height: 1em;
 }
 
-header a {
-  color: white;
+subheader {
+  display: flex;
+  background-color: #ddd;
+  color: black;
+  margin-top: 52px;
+  padding-top: 8px;
+  font-size: 16px;
+}
+
+subheader a {
+  color: black;
   text-decoration: none;
   border-bottom: 1px solid;
 }
@@ -35,6 +45,15 @@ header a {
 #playground {
   display: flex;
   flex: 1;
+  margin-top: 10px;
+}
+
+#playground p,
+#playground span,
+#playground ul li,
+#playground ol li {
+  font-size: 14px;
+  line-height: 14px;
 }
 
 #input {
@@ -58,8 +77,8 @@ header a {
   padding: 0 1em 1em;
 
   z-index: 100;
-  background-color: #294e80;
-  color: white;
+  background-color: #ddd;
+  color: black;
   font-size: 80%;
 }
 
@@ -71,13 +90,16 @@ header a {
 
 .popup li {
   padding: 0.5em 0;
+  margin-right: 0.2em;
 }
 
 .button {
   cursor: pointer;
 }
+
 .button:hover {
-  color: #ffa700;
+  color: black;
+  font-weight: bold;
 }
 
 .popup-on-hover {
@@ -89,7 +111,7 @@ header a {
 }
 
 .popup-on-hover:hover .popup-header {
-  color: #ffa700;
+  font-weight: bold;
   cursor: pointer;
 }
 
@@ -99,6 +121,11 @@ header a {
 
 .header-item {
   margin-left: 1em;
+  margin-left: 1em;
+}
+
+.header-item label input {
+  margin-right: 8px;
 }
 
 .header-item--extra-padding {
@@ -175,6 +202,10 @@ header a {
 }
 
 #settings-popup {
-    overflow-y: auto;
-    max-height: calc( 100vh - 5rem );
+  overflow-y: auto;
+  max-height: calc(100vh - 5rem);
+}
+
+label {
+  font-weight: normal;
 }
