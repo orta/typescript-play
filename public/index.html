@@ -4,8 +4,204 @@
     <title>TypeScript playground</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
+    <link rel="stylesheet" href="/libraries/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="style.css" />
     <link rel="shortcut icon" href="favicon.ico" />
+    <style type="text/css">
+
+body {
+  display: flex;
+  -ms-flex-direction: column;
+      flex-direction: column;
+  min-height: 100%; }
+  body .content {
+    -ms-flex: 1;
+        flex: 1; }
+
+@media (max-width: 767px) {
+  body {
+    font-size: 7px; }
+  .navbar-logo {
+    height: 1.8em !important;
+    margin-left: -0.5em !important;
+    margin-top: 0.6em !important; }
+  .fork-me-ribbon {
+    display: none; }
+  .update-banner {
+    padding: 3em 3em 1em 3em !important;
+    font-size: 1.1em; } }
+
+@media (min-width: 768px) {
+  body {
+    /* font-size: 8px; */ }
+  .navbar-brand {
+    top: 5px;
+    left: 15px;
+    position: absolute; }
+  .update-banner {
+    padding: 1.6em !important;
+    font-size: 1.1em;
+    padding-bottom: 1em !important;
+    height: 4.4em !important; } }
+
+@media (min-width: 992px) {
+  body {
+    /* font-size: 9px; */ }
+  .update-banner {
+    padding: 1.2em !important;
+    height: 4.2em !important; } }
+
+@media (min-width: 1200px) {
+  body {
+    font-size: 10px; }
+  .update-banner {
+    padding: .9em !important;
+    height: 4em !important; } }
+
+h1, h2, h3, h4, h5 {
+  color: #FFA700;
+  font-family: "wf_segoe-ui_semilight"; }
+
+h1 {
+  color: #152740;
+  font-size: 3.6em; }
+
+p, span, ul li, ol li {
+  font-size: 1.6em;
+  line-height: 1.6em; }
+
+ul li ul li, ol li ol li {
+  font-size: 1em; }
+
+a {
+  color: #265988; }
+
+blockquote {
+  font-size: 1em; }
+
+img {
+  width: 100%;
+  height: auto; }
+
+.light-theme {
+  color: black; }
+
+/* centered columns styles */
+.row-centered {
+  text-align: center; }
+
+.row {
+  margin-right: 0px;
+  margin-left: 0px; }
+
+.col-centered {
+  display: inline-block;
+  float: none;
+  /* reset the text-align */
+  text-align: left; }
+
+/* Buttons */
+.btn {
+  box-shadow: 2px 2px 8px 0px rgba(0, 0, 0, 0.25); }
+
+.main-content-skip {
+  width: 100%;
+  height: 0px;
+  text-align: center; }
+  .main-content-skip:focus {
+    color: #fff;
+    background-color: #000;
+    position: absolute;
+    top: 0;
+    z-index: 99999;
+    font-size: 1.6em;
+    line-height: 0;
+    padding: 3.2em; }
+
+/* NAVBAR */
+.navbar-default {
+  background-color: #294E80;
+  border: 0px;
+  box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.25); }
+  .navbar-default p, .navbar-default span, .navbar-default li {
+    font-size: 1.4rem; }
+
+/*@media all and (min-width:1200px)*/
+.centered-navbar > ul {
+  display: inline-block;
+  float: none; }
+
+/*@media all and (min-width:1200px)*/
+.centered-navbar {
+  text-align: center;
+  margin-bottom: -3px;
+  box-shadow: none;
+  border: none; }
+
+.navbar-toggle {
+  margin-left: 10px; }
+
+.navbar-default .navbar-toggle .icon-bar {
+  background-color: white; }
+
+.navbar-default .navbar-nav > li > a {
+  color: white;
+  font-size: 1.4rem;
+  margin-left: .5em; }
+
+.navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover, .navbar-default .navbar-nav > .active > a:focus {
+  color: #555;
+  background-color: white; }
+
+.navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus {
+  color: white;
+  background-color: #283a62; }
+
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
+  color: #FFA700; }
+
+.navbar-nav {
+  color: white; }
+
+.navbar-brand {
+  padding: 0;
+  margin: 0; }
+  @media screen and (-ms-high-contrast: black-on-white) {
+    .navbar-brand {
+      -ms-high-contrast-adjust: none;
+      background-color: #294E80 !important; } }
+
+.navbar-logo {
+  width: 7.5em;
+  height: 1.6em;
+  margin-left: 0.5em;
+  margin-top: 0.4em; }
+
+#ellipses_btn {
+  margin: -15px;
+  display: inline-block;
+  width: 5em;
+  height: 100%; }
+
+.navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus {
+  background-color: #243A61; }
+
+.high-contrast-only {
+  display: none; }
+
+@media screen and (-ms-high-contrast: active) {
+  .high-contrast-only {
+    display: inherit; } }
+
+.fork-me-ribbon {
+  width: 130px;
+  right: 0;
+  top: 0;
+  position: absolute; }
+
+.navbar-default .navbar-toggle {
+  border: none; }
+    </style>
   </head>
 
   <body>
@@ -84,12 +280,46 @@
         ignoreDuplicateModules: ["vs/editor/editor.main"],
       });
     </script>
-    <div id="app">
+
+    <header role="banner">
+        <nav role="navigation" class="navbar navbar-default navbar-fixed-top">
+             <div class="container-fluid">
+                <!-- Contains the logo and a toggle button for smaller screen sizes. -->
+                <div class="navbar-header">
+                  <!-- Toggles the visibility of the nav area on smaller screen sizes. -->
+                  <button type="button" class="navbar-toggle pull-left collapsed" data-toggle="collapse" data-target="#navbar-collapse-div">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                  </button>
+    
+                  <!-- Top-left logo. -->
+                  <a class="navbar-brand" href="/index.html" aria-label="TypeScript Home Page">
+                    <img class="navbar-logo" src="/assets/images/logo_nocircle.svg">
+                  </a>
+                </div>
+    
+                <!-- The navigation items. -->
+                <div class="collapse navbar-collapse centered-navbar" id="navbar-collapse-div">
+                  <ul class="nav navbar-nav">
+                    <li class=""><a href="/samples/index.html">Quick Start</a></li>
+                    <li class=""><a href="/docs/index.html">Documentation </a></li>
+                    <li><a href="/index.html#download-links">Download</a></li>
+                    <li class=""><a href="/community/index.html">Connect</a></li>
+                    <li class="active"><a href="/play/index.html">Playground</a></li>
+                  </ul>
+                </div>
+    
+            </div>
+        </nav>
+    </header>
+
       <div class="flash flash--hidden">
         <span class="flash__message"></span>
       </div>
 
-      <header>
+      <subheader>
         <div
           class="header-item"
           style="display: flex; flex-direction: row; align-items: center;"
@@ -214,50 +444,16 @@
 
             <div style="margin-top: 2em;">
               Playground allows you to compile TypeScript and see JavaScript
-              output.
+              output, as well as inspect how your code works in editors like VS Code
             </div>
 
             <div style="margin-top: 2em;">
-              Differences from
-              <a href="https://www.typescriptlang.org/play" target="_blank"
-                >typescriptlang.org/play</a
-              >:
+              Adapted from <a href="https://github.com/agentcooper/typescript-play">agentcooper/typescript-play</a> with
+              code viewable at <a href="https://github.com/orta/typescript-play">orta/typescript-play</a>.
             </div>
-            <ul class="compact-list" style="margin-top: 0.5em;">
-              <li>&ndash; All strict options turned on by default</li>
-              <li>&ndash; More available compiler options</li>
-              <li>&ndash; Ability to switch TypeScript version</li>
-              <li>&ndash; More space for code</li>
-              <li>&ndash; More examples</li>
-              <li>&ndash; Quicker sharing, URL updates as you type</li>
-              <li>&ndash; Shorter sharing URLs</li>
-              <li>
-                &ndash;
-                <a href="https://github.com/agentcooper/typescript-play"
-                  >Open source</a
-                >
-              </li>
-            </ul>
           </div>
         </div>
-
-        <p style="margin-left: auto; margin-right: 1em;">
-          <a
-            style="border: none;"
-            target="_blank"
-            href="https://github.com/Microsoft/TypeScript/releases"
-            >TS changelog</a
-          >
-        </p>
-        <p style="margin-right: 2em;">
-          <a
-            style="border: none;"
-            target="_blank"
-            href="https://www.typescriptlang.org/docs/home.html"
-            >TS docs</a
-          >
-        </p>
-      </header>
+      </subheader>
       <main id="playground">
         <section id="input"></section>
         <section id="output"></section>
