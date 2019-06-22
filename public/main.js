@@ -419,6 +419,11 @@ async function main() {
     },
 
     getInitialCode() {
+      if (location.hash.startsWith("#src")) {
+        const code = location.hash.replace("#src=", "").trim();
+        return decodeURIComponent(code);
+      }
+      
       if (location.hash.startsWith("#code")) {
         const code = location.hash.replace("#code/", "").trim();
         return LZString.decompressFromEncodedURIComponent(code);
