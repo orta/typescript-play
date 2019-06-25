@@ -323,9 +323,7 @@ async function main() {
 
     selectExample: async function(exampleName) {
       try {
-        const res = await fetch(
-          `${window.CONFIG.baseUrl}/examples/${exampleName}.ts`,
-        );
+        const res = await fetch(`./examples/${exampleName}.ts`);
         const code = await res.text();
         UI.shouldUpdateHash = false;
         State.inputModel.setValue(code.trim());
