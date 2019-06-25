@@ -209,3 +209,7 @@ subheader a {
 label {
   font-weight: normal;
 }
+
+.monaco-editor-hover {
+  z-index: 2000 !important;
+}
