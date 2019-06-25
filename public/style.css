@@ -48,14 +48,6 @@ subheader a {
   margin-top: 10px;
 }
 
-#playground p,
-#playground span,
-#playground ul li,
-#playground ol li {
-  font-size: 14px;
-  line-height: 14px;
-}
-
 #input {
   flex: 1;
 }
