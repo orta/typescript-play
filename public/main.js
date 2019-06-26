@@ -388,6 +388,10 @@ async function main() {
       }
     },
 
+    storeCurrentCodeInLocalStorage() {
+      localStorage.setItem("playground-history", State.inputModel.getValue())
+    },
+
     updateCompileOptions(name, value) {
       console.log(`${name} = ${value}`);
 
@@ -395,7 +399,7 @@ async function main() {
         [name]: value,
       });
 
-      console.log("Updaring compiler options to", compilerOptions);
+      console.log("Updating compiler options to", compilerOptions);
       monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
         compilerOptions,
       );
@@ -425,6 +429,10 @@ async function main() {
       if (location.hash.startsWith("#code")) {
         const code = location.hash.replace("#code/", "").trim();
         return LZString.decompressFromEncodedURIComponent(code);
+      }
+
+      if (localStorage.getItem("playground-history")) {
+        return localStorage.getItem("playground-history")
       }
 
       return `
@@ -490,6 +498,8 @@ console.log(message);
     if (UI.shouldUpdateHash) {
       UI.updateURL();
     }
+
+    UI.storeCurrentCodeInLocalStorage()
   }
 
   UI.setCodeFromHash();
