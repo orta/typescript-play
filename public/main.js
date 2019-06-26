@@ -229,7 +229,7 @@ async function main() {
     renderAvailableVersions() {
       const node = document.querySelector("#version-popup");
       const html = `
-    <ul>
+    <ul class="versions">
     ${Object.keys(window.CONFIG.availableTSVersions)
       .sort()
       .reverse()

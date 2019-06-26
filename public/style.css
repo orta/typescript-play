@@ -65,13 +65,16 @@ subheader a {
 .popup {
   display: none;
   position: absolute;
-  left: -1em;
-  padding: 0 1em 1em;
-
+  left: -0.5em;
   z-index: 100;
   background-color: #ddd;
   color: black;
   font-size: 80%;
+  padding: 1em;
+}
+
+.buttons {
+  padding: 0;
 }
 
 .popup ul {
@@ -81,17 +84,22 @@ subheader a {
 }
 
 .popup li {
-  padding: 0.5em 0;
+  padding: 0.6em 0;
   margin-right: 0.2em;
 }
 
-.button {
-  cursor: pointer;
+.versions li {
+  width: 60px;
 }
 
-.button:hover {
-  color: black;
-  font-weight: bold;
+.popup.buttons li.button {
+  cursor: pointer;
+  padding-left: 10px;
+}
+
+.popup li:hover {
+  background-color: #bbb;
+  /* margin-left:4px; */
 }
 
 .popup-on-hover {
@@ -103,7 +111,9 @@ subheader a {
 }
 
 .popup-on-hover:hover .popup-header {
-  font-weight: bold;
+  text-decoration: underline;
+  color: #294E80;
+
   cursor: pointer;
 }
 
@@ -200,6 +210,9 @@ subheader a {
 
 label {
   font-weight: normal;
+  padding-bottom: 5px;
+  margin-bottom: 0;
+  padding-left: 5px;
 }
 
 .monaco-editor-hover {
