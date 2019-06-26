@@ -362,7 +362,7 @@ async function main() {
       const hash = `code/${LZString.compressToEncodedURIComponent(
         State.inputModel.getValue(),
       )}`;
-
+        
       const urlParams = Object.assign({}, diff);
 
       ["lib", "ts"].forEach(param => {
@@ -508,7 +508,7 @@ console.log(message);
   UI.renderAvailableVersions();
 
   /* Run */
-
+  document.getElementById("run").onclick = () => runJavaScript()
   function runJavaScript() {
     console.clear();
     // to hide the stack trace
