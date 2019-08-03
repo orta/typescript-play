@@ -81,150 +81,169 @@ const LibManager = {
    * @param {string} sourceCode 
    */
   detectNewImportsToAcquireTypeFor: async function(sourceCode) {
-    // TODO: debounce
-    //
-    // TODO: This needs to be replaced by the AST - it still works in comments 
-    // blocked by https://github.com/microsoft/monaco-typescript/pull/38
-    //
-    // https://regex101.com/r/Jxa3KX/4
-    const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
-    //  https://regex101.com/r/hdEpzO/3
-    const es6Pattern = /import((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm
 
-    const foundModules = new Set()
-    
-    while ((match = es6Pattern.exec(sourceCode)) !== null) {
-      if (match[5]) foundModules.add(match[5])
-    }
-
-    while ((match = requirePattern.exec(sourceCode)) !== null) {
-      if (match[5]) foundModules.add(match[5])
-    }
-    console.log(this.acquireModuleMetadata)
-    
-    const filteredModulesToLookAt =  Array.from(foundModules).filter(
-      // local import
-      m => !m.startsWith(".") &&
-      // already tried and failed
-      this.acquireModuleMetadata[m] === undefined
-      )
-    console.log(filteredModulesToLookAt)
-    
-    
-    const moduleJSONURL = (name) => `http://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${encodeURI(name)}?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
-    const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURI(name)}/${encodeURI(path)}`
-    const packageJSONURL = (name) => unpkgURL(name, "package.json")
-
-    filteredModulesToLookAt.forEach(async mod => {
-      // So it doesn't run twice
-      this.acquireModuleMetadata[mod] = null
-
-      const url = moduleJSONURL(mod)
-      
-      const response = await fetch(url)
-      const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response) }
-      if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
-      
-      const responseJSON = await response.json()
-      if (!responseJSON) { return error(`Could not get Algolia JSON for the module '${mod}'`, response) }
-
-      if (!responseJSON.types) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
-      if (!responseJSON.types.ts) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
-
-      this.acquireModuleMetadata[mod] = responseJSON
-      // console.log(responseJSON)
-
-      const addModuleToRuntime =  async (mod, path) => {
-        const folderToBeRelativeFrom = path.substr(0, path.lastIndexOf("/"))
-        const dtsFileURL = unpkgURL(mod, path)
-
-        const dtsResponse = await fetch(dtsFileURL)
-        if (!dtsResponse.ok) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
-
-        let dtsResponseText = await dtsResponse.text()
-        if (!dtsResponseText) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
-
-        // For now lets try only one level deep for the references. This means we don't have to deal with potential 
-        // infinite loops - open to PRs adding that
-        if (dtsResponseText.indexOf("reference path") > 0) {  
-          // https://regex101.com/r/DaOegw/1
-          const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm
-          while ((match = referencePathExtractionPattern.exec(dtsResponseText)) !== null) {
-
-            console.log(match)
-
-            const relativePath = match[1]
-            if (relativePath) {
-              
-              let newPath = null
-              // Starts with ./
-              if (relativePath.indexOf("./") === 0) {
-                newPath = folderToBeRelativeFrom + relativePath.substr(2)
-              } else {
-                newPath = folderToBeRelativeFrom + relativePath
-              }
+   /**
+   * @param {string} sourceCode 
+   */
+    const getTypeDependenciesForSourceCode = (sourceCode) => {
+      // TODO: debounce
+      //
+      // TODO: This needs to be replaced by the AST - it still works in comments 
+      // blocked by https://github.com/microsoft/monaco-typescript/pull/38
+      //
+      // TODO:Add hardcoded module lookups for node built-ins
+      //
+      // TODO: Support pulling out the root component of a module first to grab that, so it can grab sub-definitions 
+      //
+      // https://regex101.com/r/Jxa3KX/4
+      const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
+      //  https://regex101.com/r/hdEpzO/3
+      const es6Pattern = /import((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm
   
-              if (newPath) {
-                console.log("1")
-                const dtsRefURL = unpkgURL(mod, newPath)
-                console.log("2")
-                const dtsReferenceResponse = await fetch(dtsRefURL)
-                if (!dtsReferenceResponse.ok) { return error(`Could not get ${newPath} for a reference link in the module '${mod}' from ${path}`, dtsReferenceResponse) }
+      const foundModules = new Set()
+      
+      while ((match = es6Pattern.exec(sourceCode)) !== null) {
+        if (match[5]) foundModules.add(match[5])
+      }
+  
+      while ((match = requirePattern.exec(sourceCode)) !== null) {
+        if (match[5]) foundModules.add(match[5])
+      }
+      console.log(this.acquireModuleMetadata)
+      
+      const filteredModulesToLookAt =  Array.from(foundModules).filter(
+        // local import
+        m => !m.startsWith(".") &&
+        // already tried and failed
+        this.acquireModuleMetadata[m] === undefined
+        )
+      console.log(filteredModulesToLookAt)
+      
+      
+      const moduleJSONURL = (name) => `http://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${encodeURIComponent(name)}?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
+      const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURIComponent(name)}/${encodeURIComponent(path)}`
+      const packageJSONURL = (name) => unpkgURL(name, "package.json")
+  
+      filteredModulesToLookAt.forEach(async mod => {
+        // So it doesn't run twice
+        this.acquireModuleMetadata[mod] = null
+  
+        const url = moduleJSONURL(mod)
         
-                let dtsReferenceResponseText = await dtsReferenceResponse.text()
-                if (!dtsReferenceResponseText) { return error(`Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`, dtsReferenceResponse) }
-                console.log("3")
-                const originalReferencePathReference = `<reference path="${match}" />`
-                const replacement = `${originalReferencePathReference}\n// auto imported\n${dtsReferenceResponseText}`
-                console.log("looking to replace", )
-                dtsResponseText = dtsResponseText.replace(originalReferencePathReference, replacement)
+        const response = await fetch(url)
+        const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response) }
+        if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
+        
+        const responseJSON = await response.json()
+        if (!responseJSON) { return error(`Could not get Algolia JSON for the module '${mod}'`, response) }
+  
+        if (!responseJSON.types) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+        if (!responseJSON.types.ts) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+  
+        this.acquireModuleMetadata[mod] = responseJSON
+        // console.log(responseJSON)
+  
+        /**
+         * Takes an initial module and the path for the root of the typings and grab it and start grabbing its 
+         * dependencies then add those the to runtime.
+         *
+         * @param {string} mod The mobule name
+         * @param {string} path  The path to the root def typ[e]
+         */
+        const addModuleToRuntime =  async (mod, path) => {
+          const folderToBeRelativeFrom = path.substr(0, path.lastIndexOf("/"))
+          const dtsFileURL = unpkgURL(mod, path)
+  
+          const dtsResponse = await fetch(dtsFileURL)
+          if (!dtsResponse.ok) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+  
+          let dtsResponseText = await dtsResponse.text()
+          if (!dtsResponseText) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+  
+          // For now lets try only one level deep for the references. This means we don't have to deal with potential 
+          // infinite loops - open to PRs adding that
+          if (dtsResponseText.indexOf("reference path") > 0) {  
+            // https://regex101.com/r/DaOegw/1
+            const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm
+            while ((match = referencePathExtractionPattern.exec(dtsResponseText)) !== null) {
+              const relativePath = match[1]
+              if (relativePath) {
+                
+                let newPath = null
+                // Starts with ./
+                if (relativePath.indexOf("./") === 0) {
+                  newPath = folderToBeRelativeFrom + relativePath.substr(2)
+                } else {
+                  newPath = folderToBeRelativeFrom + relativePath
+                }
+    
+                if (newPath) {
+                  const dtsRefURL = unpkgURL(mod, newPath)
+                  const dtsReferenceResponse = await fetch(dtsRefURL)
+                  if (!dtsReferenceResponse.ok) { return error(`Could not get ${newPath} for a reference link in the module '${mod}' from ${path}`, dtsReferenceResponse) }
+          
+                  let dtsReferenceResponseText = await dtsReferenceResponse.text()
+                  if (!dtsReferenceResponseText) { return error(`Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`, dtsReferenceResponse) }
+  
+                  const originalReferencePathReference = `<reference path="${relativePath}" />`
+                  const replacement = `${originalReferencePathReference}\n// auto imported\n${dtsReferenceResponseText}`
+
+                  dtsResponseText = dtsResponseText.replace(originalReferencePathReference, replacement)
+                }
               }
             }
           }
+
+          // Now look and grab dependent modules where you need the 
+          // 
+          await getTypeDependenciesForSourceCode(dtsResponseText)
+
+
+          const typelessModule = mod.split("@types/").slice(-1)
+        const wrapped = `
+  declare module "${typelessModule}" {
+    ${dtsResponseText}
+  }
+  `
+          console.log({name: mod, content: wrapped })
+          console.log( wrapped )
+          monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${path}`);
         }
-
-        const typelessModule = mod.split("@types/").slice(-1)
-      const wrapped = `
-declare module "${typelessModule}" {
-  ${dtsResponseText}
-}
-`
-        console.log({name: mod, content: wrapped })
-        console.log( wrapped )
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${path}`);
-      }
-      
-      if (responseJSON.types.ts === "included") {
-        const modPackageURL = packageJSONURL(mod)
-
-        const response = await fetch(modPackageURL)
-        if (!response.ok) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
-
-        const responseJSON = await response.json()
-        if (!responseJSON) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
-
-        // Get the path of the root d.ts file
-
-        // non-inferred route
-        let rootTypePath = responseJSON.typing
         
-        // package main is custom 
-        if (!rootTypePath && typeof responseJSON.main === 'string' && responseJSON.main.indexOf('.js') > 0) {
-          rootTypePath = responseJSON.main.replace(/js$/, 'd.ts');
+        if (responseJSON.types.ts === "included") {
+          const modPackageURL = packageJSONURL(mod)
+  
+          const response = await fetch(modPackageURL)
+          if (!response.ok) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
+  
+          const responseJSON = await response.json()
+          if (!responseJSON) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
+  
+          // Get the path of the root d.ts file
+  
+          // non-inferred route
+          let rootTypePath = responseJSON.typing
+          
+          // package main is custom 
+          if (!rootTypePath && typeof responseJSON.main === 'string' && responseJSON.main.indexOf('.js') > 0) {
+            rootTypePath = responseJSON.main.replace(/js$/, 'd.ts');
+          }
+  
+          // Final fallback, to have got here it must have passed in algolia
+          if (!rootTypePath) {
+            rootTypePath = "index.d.ts"
+          }
+  
+  
+          await addModuleToRuntime(mod, rootTypePath)
+        } else if(responseJSON.types.ts === "definitely-typed") {
+          await addModuleToRuntime(responseJSON.types.definitelyTyped, "index.d.ts")
         }
+      })
+    }
 
-        // Final fallback, to have got here it must have passed in algolia
-        if (!rootTypePath) {
-          rootTypePath = "index.d.ts"
-        }
-
-
-        await addModuleToRuntime(mod, rootTypePath)
-      } else if(responseJSON.types.ts === "definitely-typed") {
-        await addModuleToRuntime(responseJSON.types.definitelyTyped, "index.d.ts")
-      }
-    })
-
+    // Start diving into the root 
+    getTypeDependenciesForSourceCode(sourceCode)
   }
 };
 
