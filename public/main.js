@@ -135,24 +135,16 @@ const LibManager = {
          */
         const addModuleToRuntime =  async (mod, path) => {
           const dtsFileURL = unpkgURL(mod, path)
-          console.log(`Getting:  ${dtsFileURL}`, )
-          if (dtsFileURL === "https://www.unpkg.com/rxjs@6.5.2/internal/observable/rxjs/operators.d.ts") {
-            debugger
-          }
-          const folderToBeRelativeFrom = getFolderForPath(path)
-          
-          
-          
           const dtsResponse = await fetch(dtsFileURL)
           if (!dtsResponse.ok) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
   
+          // TODO: handle checking for a resolve to index.d.ts whens someone imports the folder
           let dtsResponseText = await dtsResponse.text()
           if (!dtsResponseText) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
-  
+          
           // For now lets try only one level deep for the references. This means we don't have to deal with potential 
           // infinite loops - open to PRs adding that
           if (dtsResponseText.indexOf("reference path") > 0) {  
-            
             // https://regex101.com/r/DaOegw/1
             const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm
             while ((match = referencePathExtractionPattern.exec(dtsResponseText)) !== null) {
@@ -168,10 +160,7 @@ const LibManager = {
                   let dtsReferenceResponseText = await dtsReferenceResponse.text()
                   if (!dtsReferenceResponseText) { return errorMsg(`Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`, dtsReferenceResponse) }
   
-                  const originalReferencePathReference = `<reference path="${relativePath}" />`
-                  const replacement = `${originalReferencePathReference}\n// auto imported\n${dtsReferenceResponseText}`
-
-                  dtsResponseText = dtsResponseText.replace(originalReferencePathReference, replacement)
+                  addLibraryToRuntime(dtsReferenceResponseText, `node_modules/${mod}/${newPath}`)
                 }
               }
             }
