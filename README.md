@@ -6,10 +6,10 @@ This branch is meant to be a hold-over until we get a new website up and running
 
 ## Getting started
 
-```
-npm install
-npm run setup
-npm start
+```sh
+yarn install
+yarn setup
+yarn start
 ```
 
 ## Updating TypeScript
