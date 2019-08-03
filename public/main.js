@@ -81,7 +81,9 @@ const LibManager = {
    * @param {string} sourceCode 
    */
   detectNewImportsToAcquireTypeFor: async function(sourceCode) {
-    // This needs to be replaced by the AST - it still works in comments 
+    // TODO: debounce
+    //
+    // TODO: This needs to be replaced by the AST - it still works in comments 
     // blocked by https://github.com/microsoft/monaco-typescript/pull/38
     //
     // https://regex101.com/r/Jxa3KX/4
@@ -120,7 +122,7 @@ const LibManager = {
       const url = moduleJSONURL(mod)
       
       const response = await fetch(url)
-      const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText) }
+      const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response) }
       if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
       
       const responseJSON = await response.json()
@@ -132,6 +134,66 @@ const LibManager = {
       this.acquireModuleMetadata[mod] = responseJSON
       // console.log(responseJSON)
 
+      const addModuleToRuntime =  async (mod, path) => {
+        const folderToBeRelativeFrom = path.substr(0, path.lastIndexOf("/"))
+        const dtsFileURL = unpkgURL(mod, path)
+
+        const dtsResponse = await fetch(dtsFileURL)
+        if (!dtsResponse.ok) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+
+        let dtsResponseText = await dtsResponse.text()
+        if (!dtsResponseText) { return error(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+
+        // For now lets try only one level deep for the references. This means we don't have to deal with potential 
+        // infinite loops - open to PRs adding that
+        if (dtsResponseText.indexOf("reference path") > 0) {  
+          // https://regex101.com/r/DaOegw/1
+          const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm
+          while ((match = referencePathExtractionPattern.exec(dtsResponseText)) !== null) {
+
+            console.log(match)
+
+            const relativePath = match[1]
+            if (relativePath) {
+              
+              let newPath = null
+              // Starts with ./
+              if (relativePath.indexOf("./") === 0) {
+                newPath = folderToBeRelativeFrom + relativePath.substr(2)
+              } else {
+                newPath = folderToBeRelativeFrom + relativePath
+              }
+  
+              if (newPath) {
+                console.log("1")
+                const dtsRefURL = unpkgURL(mod, newPath)
+                console.log("2")
+                const dtsReferenceResponse = await fetch(dtsRefURL)
+                if (!dtsReferenceResponse.ok) { return error(`Could not get ${newPath} for a reference link in the module '${mod}' from ${path}`, dtsReferenceResponse) }
+        
+                let dtsReferenceResponseText = await dtsReferenceResponse.text()
+                if (!dtsReferenceResponseText) { return error(`Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`, dtsReferenceResponse) }
+                console.log("3")
+                const originalReferencePathReference = `<reference path="${match}" />`
+                const replacement = `${originalReferencePathReference}\n// auto imported\n${dtsReferenceResponseText}`
+                console.log("looking to replace", )
+                dtsResponseText = dtsResponseText.replace(originalReferencePathReference, replacement)
+              }
+            }
+          }
+        }
+
+        const typelessModule = mod.split("@types/").slice(-1)
+      const wrapped = `
+declare module "${typelessModule}" {
+  ${dtsResponseText}
+}
+`
+        console.log({name: mod, content: wrapped })
+        console.log( wrapped )
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${path}`);
+      }
+      
       if (responseJSON.types.ts === "included") {
         const modPackageURL = packageJSONURL(mod)
 
@@ -156,27 +218,10 @@ const LibManager = {
           rootTypePath = "index.d.ts"
         }
 
-        const dtsFileURL = unpkgURL(mod, rootTypePath)
-        console.log(dtsFileURL)
 
-        const dtsResponse = await fetch(dtsFileURL)
-        if (!dtsResponse.ok) { return error(`Could not get root d.ts file for the module '${mod}' at ${rootTypePath}`, dtsResponse) }
-
-        const dtsResponseText = await dtsResponse.text()
-        if (!dtsResponseText) { return error(`Could not get root d.ts file for the module '${mod}' at ${rootTypePath}`, dtsResponse) }
-
-        console.log(dtsResponseText)
-        const wrapped = `
-declare module "${mod}" {
-  ${dtsResponseText}
-}
-        `
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${rootTypePath}`);
-
-
+        await addModuleToRuntime(mod, rootTypePath)
       } else if(responseJSON.types.ts === "definitely-typed") {
-
-
+        await addModuleToRuntime(responseJSON.types.definitelyTyped, "index.d.ts")
       }
     })
 
