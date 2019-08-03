@@ -84,8 +84,10 @@ const LibManager = {
 
    /**
    * @param {string} sourceCode 
+   * @param {string | undefined} mod 
+   * @param {string | undefined} path 
    */
-    const getTypeDependenciesForSourceCode = (sourceCode) => {
+    const getTypeDependenciesForSourceCode = (sourceCode, mod, path) => {
       // TODO: debounce
       //
       // TODO: This needs to be replaced by the AST - it still works in comments 
@@ -111,10 +113,11 @@ const LibManager = {
       }
       console.log(this.acquireModuleMetadata)
       
+      /** @type {string[]} */
       const filteredModulesToLookAt =  Array.from(foundModules).filter(
-        // local import
-        m => !m.startsWith(".") &&
-        // already tried and failed
+        // only allow local imports when we're resolving inside an existing module 
+        m => mod || !m.startsWith(".") &&
+        // already tried this module and failed
         this.acquireModuleMetadata[m] === undefined
         )
       console.log(filteredModulesToLookAt)
@@ -124,30 +127,12 @@ const LibManager = {
       const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURIComponent(name)}/${encodeURIComponent(path)}`
       const packageJSONURL = (name) => unpkgURL(name, "package.json")
   
-      filteredModulesToLookAt.forEach(async mod => {
-        // So it doesn't run twice
-        this.acquireModuleMetadata[mod] = null
-  
-        const url = moduleJSONURL(mod)
-        
-        const response = await fetch(url)
-        const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response) }
-        if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
-        
-        const responseJSON = await response.json()
-        if (!responseJSON) { return error(`Could not get Algolia JSON for the module '${mod}'`, response) }
-  
-        if (!responseJSON.types) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
-        if (!responseJSON.types.ts) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
-  
-        this.acquireModuleMetadata[mod] = responseJSON
-        // console.log(responseJSON)
-  
+
         /**
          * Takes an initial module and the path for the root of the typings and grab it and start grabbing its 
          * dependencies then add those the to runtime.
          *
-         * @param {string} mod The mobule name
+         * @param {string} mod The module name
          * @param {string} path  The path to the root def typ[e]
          */
         const addModuleToRuntime =  async (mod, path) => {
@@ -209,6 +194,30 @@ const LibManager = {
           console.log( wrapped )
           monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${path}`);
         }
+
+        /**
+         * Takes a module import, then uses both the algolia API and the the package.json to derive 
+         * the root type def path.
+         * 
+         * @param {string} mod 
+         * @returns {Promise<{ mod: string, path: string }>} 
+         */
+      const getModuleAndRootDefTypePath = async (mod) => {
+
+        // For modules
+        const url = moduleJSONURL(mod)
+        
+        const response = await fetch(url)
+        const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response) }
+        if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
+        
+        const responseJSON = await response.json()
+        if (!responseJSON) { return error(`Could not get Algolia JSON for the module '${mod}'`, response) }
+  
+        if (!responseJSON.types) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+        if (!responseJSON.types.ts) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+  
+        this.acquireModuleMetadata[mod] = responseJSON
         
         if (responseJSON.types.ts === "included") {
           const modPackageURL = packageJSONURL(mod)
@@ -234,10 +243,24 @@ const LibManager = {
             rootTypePath = "index.d.ts"
           }
   
-  
-          await addModuleToRuntime(mod, rootTypePath)
+          return { mod, path: rootTypePath }
         } else if(responseJSON.types.ts === "definitely-typed") {
-          await addModuleToRuntime(responseJSON.types.definitelyTyped, "index.d.ts")
+          return { mod: responseJSON.types.definitelyTyped, path: "index.d.ts" }
+        } else {
+          throw "This shouldn't happen"
+        }
+      }
+
+      filteredModulesToLookAt.forEach(async mod => {
+        const modIsScopedPackageOnly = mod.indexOf("@") === 0 && mod.split("/").length === 2
+        const modIsPackageOnly = mod.indexOf("@") === -1 && mod.split("/").length === 1
+        const isPackageRootImport = modIsPackageOnly || modIsScopedPackageOnly
+
+        // So it doesn't run twice
+        this.acquireModuleMetadata[mod] = null
+        if (isPackageRootImport){
+          const packageDef = await getModuleAndRootDefTypePath(mod)
+          if (packageDef) await addModuleToRuntime(packageDef.mod, packageDef.path)
         }
       })
     }
