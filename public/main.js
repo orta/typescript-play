@@ -36,11 +36,7 @@ const LibManager = {
     return this._addRemoteLib(`${this.coreLibPath}${fileName}`, ...args);
   },
 
-  _addRemoteLib: async function(
-    url,
-    stripNoDefaultLib = true,
-    followReferences = true,
-  ) {
+  _addRemoteLib: async function(url, stripNoDefaultLib = true, followReferences = true) {
     const fileName = this.basename(url);
 
     if (this.libs[fileName]) {
@@ -50,17 +46,13 @@ const LibManager = {
     UI.toggleSpinner(true);
     const res = await fetch(url);
     if (res.status === 404) {
-      console.log(
-        `Check https://unpkg.com/typescript@${window.CONFIG.TSVersion}/lib/`,
-      );
+      console.log(`Check https://unpkg.com/typescript@${window.CONFIG.TSVersion}/lib/`);
     }
     const rawText = await res.text();
 
     UI.toggleSpinner(false);
 
-    const text = stripNoDefaultLib
-      ? rawText.replace('/// <reference no-default-lib="true"/>', "")
-      : rawText;
+    const text = stripNoDefaultLib ? rawText.replace('/// <reference no-default-lib="true"/>', "") : rawText;
 
     if (followReferences) {
       const paths = this.getReferencePaths(text);
@@ -72,10 +64,7 @@ const LibManager = {
       }
     }
 
-    const lib = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      text,
-      fileName,
-    );
+    const lib = monaco.languages.typescript.typescriptDefaults.addExtraLib(text, fileName);
 
     console.groupCollapsed(`Added '${fileName}'`);
     console.log(text);
@@ -85,6 +74,113 @@ const LibManager = {
 
     return lib;
   },
+
+  acquireModuleMetadata: {},
+
+  /**
+   * @param {string} sourceCode 
+   */
+  detectNewImportsToAcquireTypeFor: async function(sourceCode) {
+    // This needs to be replaced by the AST - it still works in comments 
+    // blocked by https://github.com/microsoft/monaco-typescript/pull/38
+    //
+    // https://regex101.com/r/Jxa3KX/4
+    const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
+    //  https://regex101.com/r/hdEpzO/3
+    const es6Pattern = /import((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm
+
+    const foundModules = new Set()
+    
+    while ((match = es6Pattern.exec(sourceCode)) !== null) {
+      if (match[5]) foundModules.add(match[5])
+    }
+
+    while ((match = requirePattern.exec(sourceCode)) !== null) {
+      if (match[5]) foundModules.add(match[5])
+    }
+    console.log(this.acquireModuleMetadata)
+    
+    const filteredModulesToLookAt =  Array.from(foundModules).filter(
+      // local import
+      m => !m.startsWith(".") &&
+      // already tried and failed
+      this.acquireModuleMetadata[m] === undefined
+      )
+    console.log(filteredModulesToLookAt)
+    
+    
+    const moduleJSONURL = (name) => `http://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${encodeURI(name)}?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
+    const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURI(name)}/${encodeURI(path)}`
+    const packageJSONURL = (name) => unpkgURL(name, "package.json")
+
+    filteredModulesToLookAt.forEach(async mod => {
+      // So it doesn't run twice
+      this.acquireModuleMetadata[mod] = null
+
+      const url = moduleJSONURL(mod)
+      
+      const response = await fetch(url)
+      const error = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText) }
+      if (!response.ok) { return error(`Could not get Algolia JSON for the module '${mod}'`,  response) }
+      
+      const responseJSON = await response.json()
+      if (!responseJSON) { return error(`Could not get Algolia JSON for the module '${mod}'`, response) }
+
+      if (!responseJSON.types) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+      if (!responseJSON.types.ts) { return console.log(`There were no types for '${mod}' - will not try again in this session`)  }
+
+      this.acquireModuleMetadata[mod] = responseJSON
+      // console.log(responseJSON)
+
+      if (responseJSON.types.ts === "included") {
+        const modPackageURL = packageJSONURL(mod)
+
+        const response = await fetch(modPackageURL)
+        if (!response.ok) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
+
+        const responseJSON = await response.json()
+        if (!responseJSON) { return error(`Could not get Package JSON for the module '${mod}'`, response) }
+
+        // Get the path of the root d.ts file
+
+        // non-inferred route
+        let rootTypePath = responseJSON.typing
+        
+        // package main is custom 
+        if (!rootTypePath && typeof responseJSON.main === 'string' && responseJSON.main.indexOf('.js') > 0) {
+          rootTypePath = responseJSON.main.replace(/js$/, 'd.ts');
+        }
+
+        // Final fallback, to have got here it must have passed in algolia
+        if (!rootTypePath) {
+          rootTypePath = "index.d.ts"
+        }
+
+        const dtsFileURL = unpkgURL(mod, rootTypePath)
+        console.log(dtsFileURL)
+
+        const dtsResponse = await fetch(dtsFileURL)
+        if (!dtsResponse.ok) { return error(`Could not get root d.ts file for the module '${mod}' at ${rootTypePath}`, dtsResponse) }
+
+        const dtsResponseText = await dtsResponse.text()
+        if (!dtsResponseText) { return error(`Could not get root d.ts file for the module '${mod}' at ${rootTypePath}`, dtsResponse) }
+
+        console.log(dtsResponseText)
+        const wrapped = `
+declare module "${mod}" {
+  ${dtsResponseText}
+}
+        `
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(wrapped, `node_modules/${mod}/${rootTypePath}`);
+
+
+      } else if(responseJSON.types.ts === "definitely-typed") {
+
+
+      }
+    })
+
+  }
 };
 
 async function main() {
@@ -488,8 +584,12 @@ console.log(message);
           window.client = client;
           UI.console();
         }
+        
+        const userInput = State.inputModel
+        const sourceCode =  userInput.getValue()
+        LibManager.detectNewImportsToAcquireTypeFor(sourceCode)
 
-        client.getEmitOutput(State.inputModel.uri.toString()).then(result => {
+        client.getEmitOutput(userInput.uri.toString()).then(result => {
           State.outputModel.setValue(result.outputFiles[0].text);
         });
       });
