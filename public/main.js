@@ -117,7 +117,6 @@ const LibManager = {
       const moduleJSONURL = (name) => `http://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${encodeURIComponent(name)}?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
       const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURIComponent(name)}/${encodeURIComponent(path)}`
       const packageJSONURL = (name) => unpkgURL(name, "package.json")
-      const getFolderForPath = (path) => path.substr(0, path.lastIndexOf("/"))
       const errorMsg = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response); debugger }
 
       const addLibraryToRuntime = (code, path) => {
@@ -238,6 +237,35 @@ const LibManager = {
         }
       }
 
+      const mapModuleNameToModule = (name) => {
+        // in node repl:
+        // > require("module").builtinModules
+        const builtInNodeMods = [
+          '_http_agent',       '_http_client',        '_http_common',
+          '_http_incoming',    '_http_outgoing',      '_http_server',
+          '_stream_duplex',    '_stream_passthrough', '_stream_readable',
+          '_stream_transform', '_stream_wrap',        '_stream_writable',
+          '_tls_common',       '_tls_wrap',           'assert',
+          'async_hooks',       'buffer',              'child_process',
+          'cluster',           'console',             'constants',
+          'crypto',            'dgram',               'dns',
+          'domain',            'events',              'fs',
+          'http',              'http2',               'https',
+          'inspector',         'module',              'net',
+          'os',                'path',                'perf_hooks',
+          'process',           'punycode',            'querystring',
+          'readline',          'repl',                'stream',
+          'string_decoder',    'sys',                 'timers',
+          'tls',               'trace_events',        'tty',
+          'url',               'util',                'v8',
+          'vm',                'worker_threads',      'zlib'
+        ]
+        if (builtInNodeMods.includes(name)) {
+          return "node"
+        }
+        return name
+      }
+
       //** A really dumb version of path.resolve */
       const mapRelativePath = (outerModule, moduleDeclaration, currentPath) => {
         // https://stackoverflow.com/questions/14780350/convert-relative-path-to-absolute-using-javascript
@@ -277,7 +305,10 @@ const LibManager = {
       const filteredModulesToLookAt =  Array.from(foundModules)
       // console.log(filteredModulesToLookAt) // , mod, path)
       
-      filteredModulesToLookAt.forEach(async moduleToDownload => {
+      filteredModulesToLookAt.forEach(async name => {
+        // Support grabbing the hardcoded node modules if needed
+        const moduleToDownload = mapModuleNameToModule(name)
+
         if (!mod && moduleToDownload.startsWith(".") ) {
           return console.log("Can't resolve local relative dependencies")
         }
