@@ -89,13 +89,11 @@ const LibManager = {
    * @param {string | undefined} mod 
    * @param {string | undefined} path 
    */
-    const getTypeDependenciesForSourceCode = (sourceCode, mod, path) => {
+    const getTypeDependenciesForSourceCode = async (sourceCode, mod, path) => {
       // TODO: debounce
       //
       // TODO: This needs to be replaced by the AST - it still works in comments 
       // blocked by https://github.com/microsoft/monaco-typescript/pull/38
-      //
-      // TODO:Add hardcoded module lookups for node built-ins
       //
       // TODO: Support pulling out the root component of a module first to grab that, so it can grab sub-definitions 
       //
@@ -125,60 +123,72 @@ const LibManager = {
         console.log(`Adding ${path} to runtime`)
       }
 
-        /**
-         * Takes an initial module and the path for the root of the typings and grab it and start grabbing its 
-         * dependencies then add those the to runtime.
-         *
-         * @param {string} mod The module name
-         * @param {string} path  The path to the root def typ[e]
-         */
-        const addModuleToRuntime =  async (mod, path) => {
-          const dtsFileURL = unpkgURL(mod, path)
-          const dtsResponse = await fetch(dtsFileURL)
-          if (!dtsResponse.ok) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
-  
-          // TODO: handle checking for a resolve to index.d.ts whens someone imports the folder
-          let dtsResponseText = await dtsResponse.text()
-          if (!dtsResponseText) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
-          
-          // For now lets try only one level deep for the references. This means we don't have to deal with potential 
-          // infinite loops - open to PRs adding that
-          if (dtsResponseText.indexOf("reference path") > 0) {  
-            // https://regex101.com/r/DaOegw/1
-            const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm
-            while ((match = referencePathExtractionPattern.exec(dtsResponseText)) !== null) {
-              const relativePath = match[1]
-              if (relativePath) {
-                
-                let newPath = mapRelativePath(mod,relativePath, path)
-                if (newPath) {
-                  const dtsRefURL = unpkgURL(mod, newPath)
-                  const dtsReferenceResponse = await fetch(dtsRefURL)
-                  if (!dtsReferenceResponse.ok) { return errorMsg(`Could not get ${newPath} for a reference link in the module '${mod}' from ${path}`, dtsReferenceResponse) }
-          
-                  let dtsReferenceResponseText = await dtsReferenceResponse.text()
-                  if (!dtsReferenceResponseText) { return errorMsg(`Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`, dtsReferenceResponse) }
-  
-                  addLibraryToRuntime(dtsReferenceResponseText, `node_modules/${mod}/${newPath}`)
+      const getReferenceDependencies = async (sourceCode, mod, path) => {
+        if (sourceCode.indexOf("reference path") > 0) {
+          // https://regex101.com/r/DaOegw/1
+          const referencePathExtractionPattern = /<reference path="(.*)" \/>/gm;
+          while ((match = referencePathExtractionPattern.exec(sourceCode)) !== null) {
+            const relativePath = match[1];
+            if (relativePath) {
+              let newPath = mapRelativePath(mod, relativePath, path);
+              if (newPath) {
+                const dtsRefURL = unpkgURL(mod, newPath);
+                const dtsReferenceResponse = await fetch(dtsRefURL);
+                if (!dtsReferenceResponse.ok) {
+                  return errorMsg(
+                    `Could not get ${newPath} for a reference link in the module '${mod}' from ${path}`,
+                    dtsReferenceResponse
+                  );
                 }
+
+                let dtsReferenceResponseText = await dtsReferenceResponse.text();
+                if (!dtsReferenceResponseText) {
+                  return errorMsg(
+                    `Could not get ${newPath} for a reference link for the module '${mod}' from ${path}`,
+                    dtsReferenceResponse
+                  );
+                }
+
+                await getTypeDependenciesForSourceCode(dtsReferenceResponseText, mod, newPath);
+                const representationalPath = `node_modules/${mod}/${newPath}`;
+                addLibraryToRuntime(dtsReferenceResponseText, representationalPath);
               }
             }
           }
-
-          // Now look and grab dependent modules where you need the 
-          // 
-          await getTypeDependenciesForSourceCode(dtsResponseText, mod, path)
-
-          const typelessModule = mod.split("@types/").slice(-1)
-        const wrapped = `
-  declare module "${typelessModule}" {
-    ${dtsResponseText}
-  }
-  `
-          
-          // console.log( wrapped )
-          addLibraryToRuntime(wrapped, `node_modules/${mod}/${path}`)
         }
+      };
+
+
+      /**
+       * Takes an initial module and the path for the root of the typings and grab it and start grabbing its 
+       * dependencies then add those the to runtime.
+       *
+       * @param {string} mod The module name
+       * @param {string} path  The path to the root def typ[e]
+       */
+      const addModuleToRuntime =  async (mod, path) => {
+        const dtsFileURL = unpkgURL(mod, path)
+        const dtsResponse = await fetch(dtsFileURL)
+        if (!dtsResponse.ok) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+
+        // TODO: handle checking for a resolve to index.d.ts whens someone imports the folder
+        let dtsResponseText = await dtsResponse.text()
+        if (!dtsResponseText) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+
+        // Now look and grab dependent modules where you need the 
+        // 
+        await getTypeDependenciesForSourceCode(dtsResponseText, mod, path)
+
+        const typelessModule = mod.split("@types/").slice(-1)
+      const wrapped = `
+declare module "${typelessModule}" {
+  ${dtsResponseText}
+}
+`
+        
+        // console.log( wrapped )
+        addLibraryToRuntime(wrapped, `node_modules/${mod}/${path}`)
+      }
 
         
 
@@ -240,26 +250,7 @@ const LibManager = {
       const mapModuleNameToModule = (name) => {
         // in node repl:
         // > require("module").builtinModules
-        const builtInNodeMods = [
-          '_http_agent',       '_http_client',        '_http_common',
-          '_http_incoming',    '_http_outgoing',      '_http_server',
-          '_stream_duplex',    '_stream_passthrough', '_stream_readable',
-          '_stream_transform', '_stream_wrap',        '_stream_writable',
-          '_tls_common',       '_tls_wrap',           'assert',
-          'async_hooks',       'buffer',              'child_process',
-          'cluster',           'console',             'constants',
-          'crypto',            'dgram',               'dns',
-          'domain',            'events',              'fs',
-          'http',              'http2',               'https',
-          'inspector',         'module',              'net',
-          'os',                'path',                'perf_hooks',
-          'process',           'punycode',            'querystring',
-          'readline',          'repl',                'stream',
-          'string_decoder',    'sys',                 'timers',
-          'tls',               'trace_events',        'tty',
-          'url',               'util',                'v8',
-          'vm',                'worker_threads',      'zlib'
-        ]
+        const builtInNodeMods = ["assert", "async_hooks", "base", "buffer", "child_process", "cluster", "console", "constants", "crypto", "dgram", "dns", "domain", "events", "fs", "globals", "http", "http2", "https", "index", "inspector", "module", "net", "os", "path", "perf_hooks", "process", "punycode", "querystring", "readline", "repl", "stream", "string_decoder", "timers", "tls", "trace_events", "tty", "url", "util", "v8", "vm", "worker_threads", "zlib"]
         if (builtInNodeMods.includes(name)) {
           return "node"
         }
@@ -315,7 +306,7 @@ const LibManager = {
 
         const moduleID = convertToModuleReferenceID(mod, moduleToDownload, path)
         if (this.acquireModuleMetadata[moduleID] || this.acquireModuleMetadata[moduleID] === null) {
-          return console.log("dupe", moduleID)
+          return
         } 
 
         const modIsScopedPackageOnly = moduleToDownload.indexOf("@") === 0 && moduleToDownload.split("/").length === 2
@@ -343,6 +334,7 @@ const LibManager = {
           await addModuleToRuntime(mod, absolutePathForModule + ".d.ts")
         }
       })
+      getReferenceDependencies(sourceCode, mod, path)
     }
 
     // Start diving into the root 
@@ -474,6 +466,8 @@ async function main() {
       try {
         this.toggleSpinner(true);
         const res = await fetch(`${window.CONFIG.baseUrl}schema/tsconfig.json`);
+        if(!res.ok) return
+
         const json = await res.json();
         this.toggleSpinner(false);
 
