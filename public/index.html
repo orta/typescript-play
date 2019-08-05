@@ -192,7 +192,6 @@ img {
   </head>
 
   <body>
-    <script src="env.js"></script>
     <script src="https://unpkg.com/url-search-params@1.1.0/build/url-search-params.js"></script>
     <script src="https://unpkg.com/clipboard-polyfill@2.4.7/build/clipboard-polyfill.js"></script>
     <script src="https://unpkg.com/monaco-editor@0.15.6/min/vs/loader.js"></script>
@@ -202,7 +201,6 @@ img {
       window.CONFIG = {
         availableTSVersions: Object.assign(
           {},
-          window.localTSVersion || {},
           {
             // https://unpkg.com/monaco-editor/
             "3.5.1": { monaco: "0.17.1" },
@@ -440,6 +438,12 @@ img {
             <div style="margin-top: 2em;">
               Playground allows you to compile TypeScript and see JavaScript
               output, as well as inspect how your code works in editors like VS Code
+            </div>
+
+            <div style="margin-top: 2em;">
+              This version contains a <em>beta version</em> of type acquisition powered by <a href="https://algolia.net">Algolia</a>, 
+              which will try to download types used by <code>import</code>`s in your code. It's not 100% comprehensive, but
+              it should cover most use cases.
             </div>
 
             <div style="margin-top: 2em;">
