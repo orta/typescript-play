@@ -95,8 +95,6 @@ const LibManager = {
       // TODO: This needs to be replaced by the AST - it still works in comments 
       // blocked by https://github.com/microsoft/monaco-typescript/pull/38
       //
-      // TODO: Support pulling out the root component of a module first to grab that, so it can grab sub-definitions 
-      //
       // https://regex101.com/r/Jxa3KX/4
       const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
       //  https://regex101.com/r/hdEpzO/4
@@ -164,30 +162,31 @@ const LibManager = {
        * dependencies then add those the to runtime.
        *
        * @param {string} mod The module name
-       * @param {string} path  The path to the root def typ[e]
+       * @param {string} path  The path to the root def type
        */
       const addModuleToRuntime =  async (mod, path) => {
-        const dtsFileURL = unpkgURL(mod, path)
+        const isDeno = path && path.indexOf("https://") === 0
+
+        const dtsFileURL = isDeno ? path : unpkgURL(mod, path)
         const dtsResponse = await fetch(dtsFileURL)
         if (!dtsResponse.ok) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
 
         // TODO: handle checking for a resolve to index.d.ts whens someone imports the folder
-        let dtsResponseText = await dtsResponse.text()
-        if (!dtsResponseText) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
+        let content = await dtsResponse.text()
+        if (!content) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
 
         // Now look and grab dependent modules where you need the 
         // 
-        await getTypeDependenciesForSourceCode(dtsResponseText, mod, path)
+        await getTypeDependenciesForSourceCode(content, mod, path)
 
-        const typelessModule = mod.split("@types/").slice(-1)
-      const wrapped = `
-declare module "${typelessModule}" {
-  ${dtsResponseText}
-}
-`
-        
-        // console.log( wrapped )
-        addLibraryToRuntime(wrapped, `node_modules/${mod}/${path}`)
+        if(isDeno) {
+          const wrapped = `declare module "${path}" { ${content} }`
+          addLibraryToRuntime(wrapped, path)
+        } else {
+          const typelessModule = mod.split("@types/").slice(-1)
+          const wrapped = `declare module "${typelessModule}" { ${content} }`
+          addLibraryToRuntime(wrapped, `node_modules/${mod}/${path}`)
+        }
       }
 
         
@@ -261,17 +260,16 @@ declare module "${typelessModule}" {
       const mapRelativePath = (outerModule, moduleDeclaration, currentPath) => {
         // https://stackoverflow.com/questions/14780350/convert-relative-path-to-absolute-using-javascript
         function absolute(base, relative) {
-          var stack = base.split("/"),
-              parts = relative.split("/");
+          if(!base) return relative
+
+          const stack = base.split("/")
+          const parts = relative.split("/");
           stack.pop(); // remove current file name (or empty string)
-                       // (omit if "base" is the current folder without trailing slash)
-          for (var i=0; i<parts.length; i++) {
-              if (parts[i] == ".")
-                  continue;
-              if (parts[i] == "..")
-                  stack.pop();
-              else
-                  stack.push(parts[i]);
+
+          for (var i = 0; i < parts.length; i++) {
+              if (parts[i] == ".") continue;
+              if (parts[i] == "..") stack.pop();
+              else stack.push(parts[i]);
           }
           return stack.join("/");
         }
@@ -296,8 +294,10 @@ declare module "${typelessModule}" {
       const filteredModulesToLookAt =  Array.from(foundModules)
       // console.log(filteredModulesToLookAt) // , mod, path)
       
+
+
       filteredModulesToLookAt.forEach(async name => {
-        // Support grabbing the hardcoded node modules if needed
+        // Support grabbing the hard-coded node modules if needed
         const moduleToDownload = mapModuleNameToModule(name)
 
         if (!mod && moduleToDownload.startsWith(".") ) {
@@ -306,13 +306,14 @@ declare module "${typelessModule}" {
 
         const moduleID = convertToModuleReferenceID(mod, moduleToDownload, path)
         if (this.acquireModuleMetadata[moduleID] || this.acquireModuleMetadata[moduleID] === null) {
-          return
+          return 
         } 
 
         const modIsScopedPackageOnly = moduleToDownload.indexOf("@") === 0 && moduleToDownload.split("/").length === 2
         const modIsPackageOnly = moduleToDownload.indexOf("@") === -1 && moduleToDownload.split("/").length === 1
         const isPackageRootImport = modIsPackageOnly || modIsScopedPackageOnly
-        
+        const isDenoModule = moduleToDownload.indexOf("https://") === 0
+
         if (isPackageRootImport) {
           // So it doesn't run twice for a package
           this.acquireModuleMetadata[moduleID] = null
@@ -324,6 +325,9 @@ declare module "${typelessModule}" {
             this.acquireModuleMetadata[moduleID] = packageDef.packageJSON
             await addModuleToRuntime(packageDef.mod, packageDef.path)
           }
+        } else if (isDenoModule) {
+          // E.g. import { serve } from "https://deno.land/std@v0.12/http/server.ts";
+          await addModuleToRuntime(moduleToDownload, moduleToDownload)
         } else {
           // E.g. import {Component} from "./MyThing"
           if (!moduleToDownload || !path) throw `No outer module or path for a relative import: ${moduleToDownload}`
@@ -331,7 +335,8 @@ declare module "${typelessModule}" {
           const absolutePathForModule = mapRelativePath(mod, moduleToDownload, path)
           // So it doesn't run twice for a package
           this.acquireModuleMetadata[moduleID] = null
-          await addModuleToRuntime(mod, absolutePathForModule + ".d.ts")
+          const resolvedFilepath = absolutePathForModule.endsWith(".ts") ? absolutePathForModule : absolutePathForModule + ".d.ts"
+          await addModuleToRuntime(mod, resolvedFilepath)
         }
       })
       getReferenceDependencies(sourceCode, mod, path)
