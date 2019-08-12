@@ -226,7 +226,7 @@ const LibManager = {
           // Get the path of the root d.ts file
   
           // non-inferred route
-          let rootTypePath = responseJSON.typing || responseJSON.types
+          let rootTypePath = responseJSON.typing || responseJSON.typings || responseJSON.types
           
           // package main is custom 
           if (!rootTypePath && typeof responseJSON.main === 'string' && responseJSON.main.indexOf('.js') > 0) {
