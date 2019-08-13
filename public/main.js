@@ -442,12 +442,12 @@ async function main() {
   }
 
   function createFile(compilerOptions) {
-    return monaco.Uri.file(
-      "input." +
-      (compilerOptions.jsx === monaco.languages.typescript.JsxEmit.None
-        ? "ts"
-        : "tsx")
-    )
+    const isJSX = compilerOptions.jsx === monaco.languages.typescript.JsxEmit.None
+    const fileExt = window.CONFIG.useJavaScript ? "js" : "ts"
+    const ext = isJSX ? fileExt + "x" : fileExt
+    const filepath ="input." + ext
+
+    return monaco.Uri.file(filepath)
   }
 
   window.UI = {
@@ -523,9 +523,14 @@ async function main() {
         .classList.toggle("spinner--hidden", !shouldShow);
     },
 
+    updateIsJavaScript(shouldUseJS) {
+      window.CONFIG.useJavaScript = shouldUseJS
+      UI.updateEditorStateAfterChange()
+    },
+
     renderSettings() {
       const node = document.querySelector("#settings-popup");
-
+      const isJS = window.CONFIG.useJavaScript
       const html = `
       ${createSelect(
         monaco.languages.typescript.ScriptTarget,
@@ -540,11 +545,22 @@ async function main() {
         "JSX",
         "jsx",
       )}
+      
+      <ul style="margin-top: 1em;">
+        <li style="margin: 0; padding: 0;" title="">
+          <label class="button" style="user-select: none; display: block;">
+            <input class="pointer" onchange="javascript:UI.updateIsJavaScript(event.target.checked);" name="isJS" type="checkbox" ${isJS ? "checked" : ""}>
+            </input>Run as JavaScript
+          </label>
+        </li>
+      </ul>
+
+    <hr/>
     <ul style="margin-top: 1em;">
     ${Object.entries(compilerOptions)
       .filter(([_, value]) => typeof value === "boolean")
       .map(([key, value]) => {
-        return `<li style="margin: 0; padding: 0;" title="${UI.tooltips[key] ||
+        return `<li style="margin: 0; padding: 0; ${isJS ? "opacity: 0.5" : ""}" title="${UI.tooltips[key] ||
           ""}"><label class="button" style="user-select: none; display: block;"><input class="pointer" onchange="javascript:UI.updateCompileOptions(event.target.name, event.target.checked);" name="${key}" type="checkbox" ${
           value ? "checked" : ""
         }></input>${key}</label></li>`;
@@ -626,12 +642,14 @@ async function main() {
       )}`;
         
       const urlParams = Object.assign({}, diff);
-
+      
       ["lib", "ts"].forEach(param => {
         if (params.has(param)) {
           urlParams[param] = params.get(param);
         }
       });
+
+      if(window.CONFIG.useJavaScript) urlParams["useJavaScript"] = true
 
       if (Object.keys(urlParams).length > 0) {
         const queryString = Object.entries(urlParams)
@@ -640,11 +658,7 @@ async function main() {
           })
           .join("&");
 
-        window.history.replaceState(
-          {},
-          "",
-          `${window.CONFIG.baseUrl}?${queryString}#${hash}`,
-        );
+        window.history.replaceState({}, "", `${window.CONFIG.baseUrl}?${queryString}#${hash}`);
       } else {
         window.history.replaceState({}, "", `${window.CONFIG.baseUrl}#${hash}`);
       }
@@ -662,17 +676,17 @@ async function main() {
       });
 
       console.log("Updating compiler options to", compilerOptions);
-      monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-        compilerOptions,
-      );
+      monaco.languages.typescript.typescriptDefaults.setCompilerOptions(compilerOptions);
 
+      UI.updateEditorStateAfterChange()
+    },
+
+    updateEditorStateAfterChange() {
       let inputCode = inputEditor.getValue();
       State.inputModel.dispose();
-      State.inputModel = monaco.editor.createModel(
-        inputCode,
-        "typescript",
-        createFile(compilerOptions)
-      );
+      
+      const language = window.CONFIG.useJavaScript ? "javascript" : "typescript"
+      State.inputModel = monaco.editor.createModel(inputCode, language, createFile(compilerOptions));
       inputEditor.setModel(State.inputModel);
 
       UI.refreshOutput();
@@ -718,17 +732,9 @@ console.log(message);
     compilerOptions,
   );
 
-  State.inputModel = monaco.editor.createModel(
-    UI.getInitialCode(),
-    "typescript",
-    createFile(compilerOptions)
-  );
-
-  State.outputModel = monaco.editor.createModel(
-    "",
-    "javascript",
-    monaco.Uri.file("output.js"),
-  );
+  const language = window.CONFIG.useJavaScript ? "javascript" : "typescript"
+  State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
+  State.outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.file("output.js"));
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
