@@ -215,7 +215,7 @@ img {
         ),
 
         extraLibs: params.has("lib") ? params.get("lib").split(",") : [],
-
+        useJavaScript: params.has("useJavaScript"),
         baseUrl: location.protocol + "//" + location.host + location.pathname,
 
         getLatestVersion() {

@@ -2,6 +2,11 @@
 
 globalThis.typeDefs = {}
 
+const languageType = ({ isJS }) => isJS ? "javascript" : "typescript"
+const monacoLanguage = () => monaco.languages.typescript
+const monacoLanguageDefaults = ({isJS}) => isJS ? monaco.languages.typescript.javascriptDefaults : monaco.languages.typescript.typescriptDefaults
+const monacoLanguageWorker = ({isJS}) =>  isJS ? monaco.languages.typescript.getJavaScriptWorker : monaco.languages.typescript.getTypeScriptWorker
+
 const LibManager = {
   libs: {},
 
@@ -16,7 +21,7 @@ const LibManager = {
       } else {
         throw new Error(`Error parsing: "${s}".`);
       }
-    });
+    })
   },
 
   basename(url) {
@@ -66,12 +71,12 @@ const LibManager = {
       }
     }
 
-    const lib = monaco.languages.typescript.typescriptDefaults.addExtraLib(text, fileName);
+    const lib = monacoLanguageDefaults({ isJS: fileName.endsWith("ts") }).addExtraLib(text, fileName);
 
     console.groupCollapsed(`Added '${fileName}'`);
     console.log(text);
     console.groupEnd();
-
+ 
     this.libs[fileName] = lib;
 
     return lib;
@@ -116,7 +121,9 @@ const LibManager = {
       const errorMsg = (msg, response) => { console.error(`${msg} - will not try again in this session`, response.status, response.statusText, response); debugger }
 
       const addLibraryToRuntime = (code, path) => {
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(code, path);
+        const defaults = monacoLanguageDefaults({ isJS: path.endsWith("js") })
+        defaults.addExtraLib(code, path);
+
         globalThis.typeDefs[path] = code
         console.log(`Adding ${path} to runtime`)
       }
@@ -179,7 +186,7 @@ const LibManager = {
         // 
         await getTypeDependenciesForSourceCode(content, mod, path)
 
-        if(isDeno) {
+        if (isDeno) {
           const wrapped = `declare module "${path}" { ${content} }`
           addLibraryToRuntime(wrapped, path)
         } else {
@@ -292,9 +299,6 @@ const LibManager = {
 
       /** @type {string[]} */
       const filteredModulesToLookAt =  Array.from(foundModules)
-      // console.log(filteredModulesToLookAt) // , mod, path)
-      
-
 
       filteredModulesToLookAt.forEach(async name => {
         // Support grabbing the hard-coded node modules if needed
@@ -372,6 +376,9 @@ async function main() {
     removeComments: false,
     skipLibCheck: false,
 
+    checkJs: window.CONFIG.useJavaScript,
+    allowJs: window.CONFIG.useJavaScript,
+
     experimentalDecorators: false,
     emitDecoratorMetadata: false,
 
@@ -433,21 +440,19 @@ async function main() {
 
       const isSelected = obj[key] === compilerOptions[compilerOption];
 
-      return `<option ${
-        isSelected ? "selected" : ""
-      } value="${key}">${key}</option>`;
+      return `<option ${isSelected ? "selected" : ""} value="${key}">${key}</option>`;
     })}
   </select>
   </label>`;
   }
 
   function createFile(compilerOptions) {
-    return monaco.Uri.file(
-      "input." +
-      (compilerOptions.jsx === monaco.languages.typescript.JsxEmit.None
-        ? "ts"
-        : "tsx")
-    )
+    const isJSX = compilerOptions.jsx === monaco.languages.typescript.JsxEmit.None
+    const fileExt = window.CONFIG.useJavaScript ? "js" : "ts"
+    const ext = isJSX ? fileExt + "x" : fileExt
+    const filepath = "input." + ext
+    console.log("File: ", filepath)
+    return monaco.Uri.file(filepath)
   }
 
   window.UI = {
@@ -523,9 +528,15 @@ async function main() {
         .classList.toggle("spinner--hidden", !shouldShow);
     },
 
+    updateIsJavaScript(shouldUseJS) {
+      window.CONFIG.useJavaScript = shouldUseJS
+      UI.updateEditorStateAfterChange()
+      document.location.reload()
+    },
+
     renderSettings() {
       const node = document.querySelector("#settings-popup");
-
+      const isJS = window.CONFIG.useJavaScript
       const html = `
       ${createSelect(
         monaco.languages.typescript.ScriptTarget,
@@ -540,11 +551,21 @@ async function main() {
         "JSX",
         "jsx",
       )}
+      <br />
+      <label class="select">
+        <span class="select-label">Lang</span>
+        <select onchange="UI.updateIsJavaScript(event.target.value === 'JavaScript')")>;
+          <option>TypeScript</option>
+          <option ${window.CONFIG.useJavaScript ? "selected" : ""}>JavaScript</option>
+        </select>
+      </label>
+
+    <hr/>
     <ul style="margin-top: 1em;">
     ${Object.entries(compilerOptions)
       .filter(([_, value]) => typeof value === "boolean")
       .map(([key, value]) => {
-        return `<li style="margin: 0; padding: 0;" title="${UI.tooltips[key] ||
+        return `<li style="margin: 0; padding: 0; ${isJS ? "opacity: 0.5" : ""}" title="${UI.tooltips[key] ||
           ""}"><label class="button" style="user-select: none; display: block;"><input class="pointer" onchange="javascript:UI.updateCompileOptions(event.target.name, event.target.checked);" name="${key}" type="checkbox" ${
           value ? "checked" : ""
         }></input>${key}</label></li>`;
@@ -626,12 +647,14 @@ async function main() {
       )}`;
         
       const urlParams = Object.assign({}, diff);
-
+      
       ["lib", "ts"].forEach(param => {
         if (params.has(param)) {
           urlParams[param] = params.get(param);
         }
       });
+
+      if(window.CONFIG.useJavaScript) urlParams["useJavaScript"] = true
 
       if (Object.keys(urlParams).length > 0) {
         const queryString = Object.entries(urlParams)
@@ -640,11 +663,7 @@ async function main() {
           })
           .join("&");
 
-        window.history.replaceState(
-          {},
-          "",
-          `${window.CONFIG.baseUrl}?${queryString}#${hash}`,
-        );
+        window.history.replaceState({}, "", `${window.CONFIG.baseUrl}?${queryString}#${hash}`);
       } else {
         window.history.replaceState({}, "", `${window.CONFIG.baseUrl}#${hash}`);
       }
@@ -655,24 +674,23 @@ async function main() {
     },
 
     updateCompileOptions(name, value) {
+      const isJS = window.CONFIG.useJavaScript
       console.log(`${name} = ${value}`);
-
-      Object.assign(compilerOptions, {
-        [name]: value,
-      });
+      Object.assign(compilerOptions, { [name]: value });
 
       console.log("Updating compiler options to", compilerOptions);
-      monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-        compilerOptions,
-      );
+      const defaults = monacoLanguageDefaults({ isJS })
+      defaults.setCompilerOptions(compilerOptions)
 
+      UI.updateEditorStateAfterChange()
+    },
+
+    updateEditorStateAfterChange() {
       let inputCode = inputEditor.getValue();
       State.inputModel.dispose();
-      State.inputModel = monaco.editor.createModel(
-        inputCode,
-        "typescript",
-        createFile(compilerOptions)
-      );
+      
+      const language = languageType({ isJS:window.CONFIG.useJavaScript })
+      State.inputModel = monaco.editor.createModel(inputCode, language, createFile(compilerOptions));
       inputEditor.setModel(State.inputModel);
 
       UI.refreshOutput();
@@ -714,21 +732,12 @@ console.log(message);
     await LibManager.addLib(path);
   }
 
-  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-    compilerOptions,
-  );
+  const defaults = monacoLanguageDefaults({ isJS: window.CONFIG.useJavaScript })
+  defaults.setCompilerOptions(compilerOptions)
 
-  State.inputModel = monaco.editor.createModel(
-    UI.getInitialCode(),
-    "typescript",
-    createFile(compilerOptions)
-  );
-
-  State.outputModel = monaco.editor.createModel(
-    "",
-    "javascript",
-    monaco.Uri.file("output.js"),
-  );
+  const language = languageType({isJS:  window.CONFIG.useJavaScript})
+  State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
+  State.outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.file("output.js"));
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
@@ -741,7 +750,10 @@ console.log(message);
   );
 
   function updateOutput() {
-    monaco.languages.typescript.getTypeScriptWorker().then(worker => {
+    const isJS = window.CONFIG.useJavaScript
+    const getWorkerProcess = monacoLanguageWorker({ isJS })
+
+    getWorkerProcess().then(worker => {
       worker(State.inputModel.uri).then((client, a) => {
         if (typeof window.client === "undefined") {
           UI.renderVersion();
@@ -793,20 +805,9 @@ console.log(message);
     }, 0);
   }
 
-  inputEditor.addCommand(
-    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-    runJavaScript,
-  );
-
-  outputEditor.addCommand(
-    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-    runJavaScript,
-  );
-
-  inputEditor.addCommand(
-    monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_F,
-    prettier,
-  );
+  inputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runJavaScript)
+  outputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runJavaScript);
+  inputEditor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_F, prettier);
 
   // if the focus is outside the editor
   window.addEventListener(
