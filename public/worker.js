@@ -1,5 +1,4 @@
 const params = new URLSearchParams(location.search);
-
 const version = params.get("version");
 
 if (!version) {
