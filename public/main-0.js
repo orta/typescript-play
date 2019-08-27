@@ -1,6 +1,8 @@
 // whoa, no typescript and no compilation!
 
-globalThis.typeDefs = {}
+const globalishObj = globalThis || window || {}
+
+globalishObj.typeDefs = {}
 
 const languageType = ({ isJS }) => isJS ? "javascript" : "typescript"
 const monacoLanguage = () => monaco.languages.typescript
@@ -124,7 +126,7 @@ const LibManager = {
         const defaults = monacoLanguageDefaults({ isJS: path.endsWith("js") })
         defaults.addExtraLib(code, path);
 
-        globalThis.typeDefs[path] = code
+        globalishObj.typeDefs[path] = code
         console.log(`Adding ${path} to runtime`)
       }
 
