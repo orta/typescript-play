@@ -449,7 +449,7 @@ async function main() {
   }
 
   function createFile(compilerOptions) {
-    const isJSX = compilerOptions.jsx === monaco.languages.typescript.JsxEmit.None
+    const isJSX = compilerOptions.jsx !== monaco.languages.typescript.JsxEmit.None
     const fileExt = window.CONFIG.useJavaScript ? "js" : "ts"
     const ext = isJSX ? fileExt + "x" : fileExt
     const filepath = "input." + ext
