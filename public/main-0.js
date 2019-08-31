@@ -5,9 +5,13 @@ const globalishObj = globalThis || window || {}
 globalishObj.typeDefs = {}
 
 const languageType = ({ isJS }) => isJS ? "javascript" : "typescript"
-const monacoLanguage = () => monaco.languages.typescript
 const monacoLanguageDefaults = ({isJS}) => isJS ? monaco.languages.typescript.javascriptDefaults : monaco.languages.typescript.typescriptDefaults
 const monacoLanguageWorker = ({isJS}) =>  isJS ? monaco.languages.typescript.getJavaScriptWorker : monaco.languages.typescript.getTypeScriptWorker
+
+// Don't ever ship this un-commented
+/**  * @type import("monaco-editor")  */
+// let monaco
+
 
 const LibManager = {
   libs: {},
@@ -426,7 +430,10 @@ async function main() {
     outputModel: null,
   };
 
-  let inputEditor, outputEditor;
+  /** @type import("monaco-editor").editor.IStandaloneCodeEditor */
+  let inputEditor;
+  /** @type import("monaco-editor").editor.IStandaloneCodeEditor */
+  let outputEditor;
 
   function createSelect(obj, globalPath, title, compilerOption) {
     return `<label class="select">
@@ -644,9 +651,7 @@ async function main() {
         {},
       );
 
-      const hash = `code/${LZString.compressToEncodedURIComponent(
-        State.inputModel.getValue(),
-      )}`;
+      const hash = `code/${LZString.compressToEncodedURIComponent(State.inputModel.getValue())}`;
         
       const urlParams = Object.assign({}, diff);
       
@@ -807,6 +812,10 @@ console.log(message);
     }, 0);
   }
 
+  // Add support for command clicking on example links
+  const isJS = window.CONFIG.useJavaScript
+  monaco.languages.registerLinkProvider(languageType({ isJS }), new ExampleHighlighter());
+
   inputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runJavaScript)
   outputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runJavaScript);
   inputEditor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_F, prettier);
@@ -865,5 +874,39 @@ console.log(message);
       );
       inputEditor.setPosition(newPosition);
     });
+  }
+}
+
+class ExampleHighlighter {
+  provideLinks(model, _cancelToken) {
+    const text = model.getValue();
+
+    // https://regex101.com/r/3uM4Fa/1
+    const docRegexLink = /example:([^\s]+)/g;
+
+    const links = [];
+    
+    let match
+    while ((match = docRegexLink.exec(text)) !== null) {
+      const start = match.index;
+      const end = match.index + match[0].length;
+      const startPos = model.getPositionAt(start);
+      const endPos = model.getPositionAt(end);
+
+      const range = {
+        startLineNumber: startPos.lineNumber,
+        startColumn: startPos.column,
+        endLineNumber: endPos.lineNumber,
+        endColumn: endPos.column
+      };
+
+      const url = document.location.href.split("#")[0]
+      links.push({
+        url: url + "#example/" + match[1],
+        range
+      });
+    }
+
+    return { links };
   }
 }

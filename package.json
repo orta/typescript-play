@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "monaco-editor": "^0.17.1",
     "serve": "^6.5.3"
   },
   "devDependencies": {
