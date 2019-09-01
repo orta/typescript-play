@@ -218,3 +218,96 @@ label {
 .monaco-editor-hover {
   z-index: 2000 !important;
 }
+
+#examples {
+  width: 800px;
+  padding: 20px;
+}
+
+/* JS / TS selector */
+#examples > ol {
+  display: flex;
+  padding-left: 0;
+}
+
+#examples ol {
+  list-style: none;
+  padding-right: 20px;
+  padding-left: 0;
+}
+
+
+#examples > div {
+  flex-wrap: wrap;
+}
+
+#examples > ol li {
+  display: inline-block;
+  padding:0;
+}
+
+#examples > ol button.section-name {
+  font-size: 2em;
+  height: 2em;
+  text-decoration: none;
+  border-bottom: none;
+  padding-bottom:0.05em;
+  padding-left: 0;
+  margin-right: 1em;
+  border: none;
+  background-color: transparent;
+}
+
+#examples > ol li:hover {
+ background-color: transparent;
+}
+
+#examples > ol button.section-name.selected {
+  border-bottom: #187ABF 2px solid;
+}
+
+/* Block of sections */
+#examples > div .section-list {
+  width: 240px;
+  margin-top: 2em;
+
+}
+
+#examples > div .section-list ol li {
+  padding: 0;
+  /* 
+  So that the example indicators will use
+  this for positioning absolutely  */
+  position: relative; 
+}
+
+#examples > div .section-list ol li a {
+  display: block;
+  padding: 8px;
+  padding-left: 10px;
+  margin-left: -8px;
+  text-decoration: none;
+  border-bottom: none;
+}
+
+#examples > div .section-list ol li a:hover {
+  color: black;
+  font-weight: bold;
+}
+
+.example-indicator {
+  position: absolute;
+  right: 0.8em;
+  top: 0.75em;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.5em;
+}
+
+.example-indicator.done {
+  background-color: #187ABF;
+}
+
+.example-indicator.changed {
+  border: #187ABF 1px solid;
+}

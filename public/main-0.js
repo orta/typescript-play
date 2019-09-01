@@ -57,7 +57,7 @@ const LibManager = {
     }
 
     UI.toggleSpinner(true);
-    const res = await fetch(url);
+    const res = await fetch(url)
     if (res.status === 404) {
       console.log(`Check https://unpkg.com/typescript@${window.CONFIG.TSVersion}/lib/`);
     }
@@ -422,7 +422,8 @@ async function main() {
   const sharedEditorOptions = {
     minimap: { enabled: false },
     automaticLayout: true,
-    scrollBeyondLastLine: false,
+    scrollBeyondLastLine: true,
+    scrollBeyondLastColumn: 3
   };
 
   const State = {
@@ -613,14 +614,198 @@ async function main() {
       return false;
     },
 
+    downloadExamplesTOC: async function() {
+      const examplesTOCHref = "/examplesTOC.json"
+      const res = await fetch(examplesTOCHref);
+      if (res.ok) {
+        const toc = await res.json()
+        const sections = toc.sections
+        const examples = toc.examples
+        const sortedSubSections = toc.sortedSubSections
+        
+        // We've got the JSON representing the TOC
+        // so replace the "loading" html with 
+        // a real menu.
+        const exampleMenu = document.getElementById("examples")
+        exampleMenu.removeChild(exampleMenu.children[0])
+        
+        // const header = document.createElement("h4")
+        // header.textContent = "Examples"
+        // exampleMenu.appendChild(header)
+
+        const sectionUL = document.createElement("ol")
+        exampleMenu.appendChild(sectionUL)
+
+        sections.forEach((s, i) => {
+          // Set up the TS/JS selection links at the top
+          const sectionHeader = document.createElement("li")
+          const sectionAnchor = document.createElement("button")
+          sectionAnchor.textContent = s.name
+          sectionAnchor.classList.add("section-name", "button")
+          sectionHeader.appendChild(sectionAnchor)
+          sectionUL.appendChild(sectionHeader)
+
+          // A wrapper div, which is used to show/hide
+          // the different sets of sections
+          const sectionContent = document.createElement("div")
+          sectionContent.id = s.name.toLowerCase()
+          sectionContent.classList.add("section-content")
+          sectionContent.style.display = i === 0 ? "flex" : "none"
+
+          // Handle clicking on a section title, moved
+          // further down so we can access the corresponding
+          // content section element.
+          sectionAnchor.onclick = () => {
+            // Visible selection
+            const allSectionTitles = document.getElementsByClassName("section-name")
+            for (const title of allSectionTitles) { title.classList.remove("selected") }
+            sectionAnchor.classList.add("selected")
+
+            const allSections = document.getElementsByClassName("section-content")
+            for (const section of allSections) { 
+              section.style.display = "none" 
+              section.classList.remove("selected")
+            }
+            sectionContent.style.display = "flex"
+            sectionContent.classList.add("selected")
+          }
+
+          const sectionSubtitle = document.createElement("p")
+          sectionSubtitle.textContent = s.subtitle
+          sectionSubtitle.style.width = "100%"
+          sectionContent.appendChild(sectionSubtitle)
+
+          // Goes from a flat list of examples, to a
+          // set of keys based on the section with
+          // an array of corresponding examples
+          const sectionDict = {}
+          examples.forEach(e => {
+            if (e.path[0] !== s.name) return;
+            if (sectionDict[e.path[1]]) {
+              sectionDict[e.path[1]].push(e)
+            } else {
+              sectionDict[e.path[1]] = [e]
+            }
+          })
+
+          // Grab the seen examples from your local storage
+          let seenExamples = {}
+          if (localStorage) {
+            const examplesFromLS = localStorage.getItem("examples-seen") || "{}"
+            seenExamples = JSON.parse(examplesFromLS)
+          }
+
+          // Looping through each section inside larger selection set, sorted by the index
+          // of the sortedSubSections array in the toc json
+          Object.keys(sectionDict)
+            .sort( (lhs, rhs) => sortedSubSections.indexOf(lhs) - sortedSubSections.indexOf(rhs))
+            .forEach(sectionName => {
+
+            const section = document.createElement("div")
+            section.classList.add("section-list")
+            
+            const sectionTitle = document.createElement("h4")
+            sectionTitle.textContent = sectionName
+            section.appendChild(sectionTitle)
+
+            const sectionExamples = sectionDict[sectionName]
+            const sectionExampleContainer = document.createElement("ol")
+            
+            sectionExamples.sort( (lhs, rhs) => lhs.sortIndex - rhs.sortIndex).forEach(e => {
+              const example = document.createElement("li")
+              
+              const exampleName = document.createElement("a")
+              exampleName.textContent = e.title
+              exampleName.href = "#"
+              exampleName.onclick = (event) => {
+                const isJS = e.name.indexOf(".js") !== -1
+                const prefix = isJS ? "useJavaScript=true" : ""
+                
+                const hash = "example/" + e.id
+                const query = prefix + objectToQueryParams(e.compilerSettings)
+                const newLocation = `${document.location.protocol}//${document.location.host}${document.location.pathname}?${query}#${hash}`
+
+                document.location = newLocation
+                event.preventDefault()
+              }
+
+              // To help people keep track of what they've seen,
+              // we keep track of what examples they've seen and 
+              // what the SHA was at the time. This makes it feasible
+              // for someone to work their way through the whole set
+              const exampleSeen = document.createElement("div") // circle
+              exampleSeen.classList.add("example-indicator")
+              const seenHash = seenExamples[e.id]
+              if (seenHash) {
+                const isSame = seenHash === e.hash
+                exampleSeen.classList.add(isSame ? "done" : "changed")
+              }
+
+              example.appendChild(exampleName)
+              example.appendChild(exampleSeen)
+
+              sectionExampleContainer.appendChild(example)
+            })
+
+            section.appendChild(sectionExampleContainer)
+            sectionContent.appendChild(section)
+            exampleMenu.appendChild(sectionContent)
+          })
+        })
+        
+      } 
+      // set the first selection by default
+      const sections = document.getElementsByClassName("section-name")
+      sections[0].onclick()
+    },
+
     selectExample: async function(exampleName) {
       try {
-        const res = await fetch(`./examples/${exampleName}.ts`,);
-        const code = await res.text();
-        UI.shouldUpdateHash = false;
+        const examplesTOCHref = "/examplesTOC.json"
+        const res = await fetch(examplesTOCHref);
+        if (!res.ok) {
+          console.error("Could not fetch example TOC")
+          return
+        }  
+
+        const toc = await res.json()
+        const example = toc.examples.find(e => e.id === exampleName)
+        if (!example) {
+          State.inputModel.setValue(`// Could not find example with id: ${exampleName} in\n// ${document.location.protocol}//${document.location.host}${examplesTOCHref}`);
+          return
+        }
+
+
+        const codeRes = await fetch(`/ex/en/${example.path.join("/")}/${encodeURIComponent(example.name)}`,);
+        let code = await codeRes.text();
+       
+        // Handle removing the compiler settings stuff
+        if (code.startsWith("//// {")) {
+          code = code.split("\n").slice(1).join("\n");
+        }
+
+        // Update the localstorage showing that you've seen this page
+        if (localStorage) {
+          const seenText = localStorage.getItem("examples-seen") || "{}"
+          const seen = JSON.parse(seenText)
+          seen[example.id] = example.hash
+          localStorage.setItem("examples-seen", JSON.stringify(seen))
+        }
+
+        // Set the menu to be the same section as this current example
+        // this happens behind the scene and isn't visible till you hover
+        const sectionTitle = example.path[0]
+        const allSectionTitles = document.getElementsByClassName("section-name")
+        for (const title of allSectionTitles) { 
+          if (title.textContent === sectionTitle)  { title.onclick({}) }
+        }
+
+        document.title = "TypeScript Playground - " + example.title
+
+        UI.shouldUpdateHash = false
         State.inputModel.setValue(code.trim());
-        location.hash = `example/${exampleName}`;
-        UI.shouldUpdateHash = true;
+        UI.shouldUpdateHash = true
+
       } catch (e) {
         console.log(e);
       }
@@ -661,7 +846,7 @@ async function main() {
         }
       });
 
-      if(window.CONFIG.useJavaScript) urlParams["useJavaScript"] = true
+      if (window.CONFIG.useJavaScript) urlParams["useJavaScript"] = true
 
       if (Object.keys(urlParams).length > 0) {
         const queryString = Object.entries(urlParams)
@@ -701,9 +886,7 @@ async function main() {
       inputEditor.setModel(State.inputModel);
 
       UI.refreshOutput();
-
       UI.renderSettings();
-
       UI.updateURL();
     },
 
@@ -716,6 +899,10 @@ async function main() {
       if (location.hash.startsWith("#code")) {
         const code = location.hash.replace("#code/", "").trim();
         return LZString.decompressFromEncodedURIComponent(code);
+      }
+
+      if (location.hash.startsWith("#example")) {
+        return "// Loading example..."
       }
 
       if (localStorage.getItem("playground-history")) {
@@ -741,14 +928,19 @@ console.log(message);
 
   const defaults = monacoLanguageDefaults({ isJS: window.CONFIG.useJavaScript })
   defaults.setCompilerOptions(compilerOptions)
+  const themeName = "typescript-playground"
+  monaco.editor.defineTheme(themeName, theme);
 
-  const language = languageType({isJS:  window.CONFIG.useJavaScript})
+  const language = languageType({ isJS:  window.CONFIG.useJavaScript })
   State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
   State.outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.file("output.js"));
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
-    Object.assign({ model: State.inputModel }, sharedEditorOptions),
+    Object.assign({ 
+      model: State.inputModel,
+      theme: themeName
+    }, sharedEditorOptions),
   );
 
   outputEditor = monaco.editor.create(
@@ -794,6 +986,8 @@ console.log(message);
     UI.renderSettings();
   });
 
+  UI.downloadExamplesTOC()
+
   updateOutput();
   inputEditor.onDidChangeModelContent(() => {
     updateOutput();
@@ -807,8 +1001,10 @@ console.log(message);
   function runJavaScript() {
     console.clear();
     // to hide the stack trace
+    const isJS = window.CONFIG.useJavaScript
+    const model = isJS ? State.inputModel : State.outputModel
     setTimeout(() => {
-      eval(State.outputModel.getValue());
+      eval(model.getValue());
     }, 0);
   }
 
@@ -910,3 +1106,78 @@ class ExampleHighlighter {
     return { links };
   }
 }
+
+// http://stackoverflow.com/questions/1714786/ddg#1714899
+function objectToQueryParams(obj) {
+  const str = []
+  for (var p in obj)
+    if (obj.hasOwnProperty(p)) {
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }
+  return str.join("&");
+}
+
+
+
+
+/** @type import("monaco-editor").IStandaloneThemeData */
+const theme = {
+	base: 'vs',
+	inherit: true,
+	rules: [
+		{ token: '', foreground: '000000', background: 'fffffe' },
+		{ token: 'invalid', foreground: 'cd3131' },
+		{ token: 'emphasis', fontStyle: 'italic' },
+		{ token: 'strong', fontStyle: 'bold' },
+
+		{ token: 'variable', foreground: '11bb11' },
+		{ token: 'variable.predefined', foreground: '4864AA' },
+		{ token: 'constant', foreground: '44ee11' },
+		{ token: 'comment', foreground: '008000' },
+		{ token: 'number', foreground: '09885A' },
+		{ token: 'number.hex', foreground: '3030c0' },
+		{ token: 'regexp', foreground: '800000' },
+		{ token: 'annotation', foreground: '808080' },
+		{ token: 'type', foreground: '008080' },
+
+		{ token: 'delimiter', foreground: '000000' },
+		{ token: 'delimiter.html', foreground: '383838' },
+		{ token: 'delimiter.xml', foreground: '0000FF' },
+
+		{ token: 'tag', foreground: '800000' },
+		{ token: 'tag.id.pug', foreground: '4F76AC' },
+		{ token: 'tag.class.pug', foreground: '4F76AC' },
+		{ token: 'meta.scss', foreground: '800000' },
+		{ token: 'metatag', foreground: 'e00000' },
+		{ token: 'metatag.content.html', foreground: 'FF0000' },
+		{ token: 'metatag.html', foreground: '808080' },
+		{ token: 'metatag.xml', foreground: '808080' },
+		{ token: 'metatag.php', fontStyle: 'bold' },
+
+		{ token: 'key', foreground: '863B00' },
+		{ token: 'string.key.json', foreground: 'A31515' },
+		{ token: 'string.value.json', foreground: '0451A5' },
+
+		{ token: 'attribute.name', foreground: 'FF0000' },
+		{ token: 'attribute.value', foreground: '0451A5' },
+		{ token: 'attribute.value.number', foreground: '09885A' },
+		{ token: 'attribute.value.unit', foreground: '09885A' },
+		{ token: 'attribute.value.html', foreground: '0000FF' },
+		{ token: 'attribute.value.xml', foreground: '0000FF' },
+
+		{ token: 'string', foreground: 'A31515' },
+		{ token: 'string.html', foreground: '0000FF' },
+		{ token: 'string.sql', foreground: 'FF0000' },
+		{ token: 'string.yaml', foreground: '0451A5' },
+
+		{ token: 'keyword', foreground: '0000FF' },
+		{ token: 'keyword.json', foreground: '0451A5' },
+		{ token: 'keyword.flow', foreground: 'AF00DB' },
+		{ token: 'keyword.flow.scss', foreground: '0000FF' },
+
+		{ token: 'operator.scss', foreground: '666666' },
+		{ token: 'operator.sql', foreground: '778899' },
+		{ token: 'operator.swift', foreground: '666666' },
+		{ token: 'predefined.sql', foreground: 'FF00FF' },
+  ]
+};

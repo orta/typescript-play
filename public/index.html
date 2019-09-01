@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>TypeScript playground</title>
+    <title>TypeScript Playground</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" crossorigin="anonymous">
@@ -327,62 +327,12 @@ img {
         <div
           style="margin-left: 1em;"
           class="header-item header-item--extra-padding popup-on-hover"
-          id="examples"
         >
           <p class="popup-header">Examples</p>
-          <div class="popup buttons" style="min-width: 20em;">
-            <ul>
-              <li class="button" data-example="classic-javascript">
-                Classic JavaScript
-              </li>
-              <li class="button" data-example="adding-types">Adding Types</li>
-              <li class="button" data-example="using-classes">Using Classes</li>
-              <li class="button" data-example="using-inheritance">
-                Using Inheritance
-              </li>
-              <li class="button" data-example="using-generics">
-                Using Generics
-              </li>
-              <li class="button" data-example="unions-and-type-guards">
-                Unions and Type Guards
-              </li>
-              <li class="button" data-example="building-a-raytracer">
-                Building a Raytracer
-              </li>
-            </ul>
-            <ul>
-              <li class="button" data-example="mapped-types">
-                Mapped types (Readonly, Partial)
-              </li>
-              <li class="button" data-example="bounded-polymorphism">
-                Bounded polymorphism
-              </li>
-              <li class="button" data-example="conditional-types">
-                Conditional types
-              </li>
-              <li class="button" data-example="async-await">async/await</li>
-              <li class="button" data-example="decorators">
-                Decorators (experimental)
-              </li>
-              <li class="button" data-example="jsx">JSX</li>
-              <!--
-                <li class="button" data-example="async-generators">
-                	Async generators
-                </li>
-              -->
-            </ul>
+          <div id="examples" class="popup buttons" style="min-width: 20em;">
+            <p style="padding: 10px;">Downloading Examples...</p>
           </div>
         </div>
-        <script>
-          document
-            .querySelector("#examples")
-            .addEventListener("click", event => {
-              if (event.target.matches("[data-example]")) {
-                const exampleName = event.target.dataset.example;
-                UI.selectExample(exampleName);
-              }
-            });
-        </script>
 
         <div
           class="header-item header-item--extra-padding popup-on-hover"
