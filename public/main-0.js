@@ -933,7 +933,9 @@ console.log(message);
 
   const language = languageType({ isJS:  window.CONFIG.useJavaScript })
   State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
-  State.outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.file("output.js"));
+
+  const outputDefault = window.CONFIG.useJavaScript ? "// Using JavaScript, no compilation needed." : ""
+  State.outputModel = monaco.editor.createModel(outputDefault, "javascript", monaco.Uri.file("output.js"));
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
@@ -945,7 +947,10 @@ console.log(message);
 
   outputEditor = monaco.editor.create(
     document.getElementById("output"),
-    Object.assign({ model: State.outputModel }, sharedEditorOptions),
+    Object.assign({ 
+      model: State.outputModel,  
+      readOnly: window.CONFIG.useJavaScript
+    }, sharedEditorOptions),
   );
 
   function updateOutput() {
@@ -966,9 +971,11 @@ console.log(message);
         const sourceCode =  userInput.getValue()
         LibManager.detectNewImportsToAcquireTypeFor(sourceCode)
 
-        client.getEmitOutput(userInput.uri.toString()).then(result => {
-          State.outputModel.setValue(result.outputFiles[0].text);
-        });
+        if(!isJS) {
+          client.getEmitOutput(userInput.uri.toString()).then(result => {
+            State.outputModel.setValue(result.outputFiles[0].text);
+          });
+        }
       });
     });
 
