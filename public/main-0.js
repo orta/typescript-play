@@ -739,6 +739,7 @@ async function main() {
               if (seenHash) {
                 const isSame = seenHash === e.hash
                 exampleSeen.classList.add(isSame ? "done" : "changed")
+                exampleSeen.title = isSame ? "Seen example already" : "Seen example, but sample has changed since"
               }
 
               example.appendChild(exampleName)
