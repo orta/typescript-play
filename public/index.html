@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html lang="en">
 <html>
   <head>
     <title>TypeScript Playground</title>
@@ -282,7 +282,7 @@ img {
     
                   <!-- Top-left logo. -->
                   <a class="navbar-brand" href="/index.html" aria-label="TypeScript Home Page">
-                    <img class="navbar-logo" src="/assets/images/logo_nocircle.svg">
+                    <img class="navbar-logo" src="/assets/images/logo_nocircle.svg" alt="TypeScript logo">
                   </a>
                 </div>
     
@@ -304,10 +304,11 @@ img {
         <span class="flash__message"></span>
       </div>
 
-      <subheader>
+      <subheader role="tablist" aria-label="Playground settings">
         <div
           class="header-item"
           style="display: flex; flex-direction: row; align-items: center; margin-right: 0;"
+          role="tab" aria-selected="true" aria-controls="panel-1" tabindex="0"
         >
           <div
             class="spinner"
@@ -326,6 +327,7 @@ img {
         <div
           style="margin-left: 1em;"
           class="header-item header-item--extra-padding popup-on-hover"
+          role="tab" tabindex="0"
         >
           <p class="popup-header">Examples</p>
           <div id="examples" class="popup buttons" style="min-width: 20em;">
@@ -336,6 +338,7 @@ img {
         <div
           class="header-item header-item--extra-padding popup-on-hover"
           id="settings"
+          role="tab" tabindex="0"
         >
           <p class="popup-header">Options</p>
           <div class="popup" id="settings-popup" style="min-width: 20em;">
@@ -346,6 +349,7 @@ img {
         <div
           class="header-item header-item--extra-padding popup-on-hover"
           id="run"
+          role="tab" tabindex="0"
         >
           <p class="popup-header">Run</p>
         </div>
@@ -353,6 +357,7 @@ img {
         <div
           class="header-item header-item--extra-padding popup-on-hover"
           id="shortcuts"
+          role="tab" tabindex="0"
         >
           <p class="popup-header">Shortcuts</p>
           <div class="popup" id="run-popup" style="min-width: 20em;">
@@ -376,7 +381,7 @@ img {
           </div>
         </div>
 
-        <div class="header-item popup-on-hover" id="about">
+        <div class="header-item popup-on-hover" id="about" role="tab" tabindex="0">
           <p class="popup-header">About</p>
           <div class="popup" id="about-popup" style="min-width: 25em;">
             <div>
