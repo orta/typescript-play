@@ -1,7 +1,6 @@
 // whoa, no typescript and no compilation!
 
-const globalishObj = globalThis || window || {}
-
+const globalishObj = typeof globalThis !== 'undefined' ? globalThis : window || {}
 globalishObj.typeDefs = {}
 
 const languageType = ({ isJS }) => isJS ? "javascript" : "typescript"
@@ -82,7 +81,7 @@ const LibManager = {
     console.groupCollapsed(`Added '${fileName}'`);
     console.log(text);
     console.groupEnd();
- 
+
     this.libs[fileName] = lib;
 
     return lib;
@@ -91,36 +90,36 @@ const LibManager = {
   acquireModuleMetadata: {},
 
   /**
-   * @param {string} sourceCode 
+   * @param {string} sourceCode
    */
   detectNewImportsToAcquireTypeFor: async function(sourceCode) {
 
    /**
-   * @param {string} sourceCode 
-   * @param {string | undefined} mod 
-   * @param {string | undefined} path 
+   * @param {string} sourceCode
+   * @param {string | undefined} mod
+   * @param {string | undefined} path
    */
     const getTypeDependenciesForSourceCode = async (sourceCode, mod, path) => {
       // TODO: debounce
       //
-      // TODO: This needs to be replaced by the AST - it still works in comments 
+      // TODO: This needs to be replaced by the AST - it still works in comments
       // blocked by https://github.com/microsoft/monaco-typescript/pull/38
       //
       // https://regex101.com/r/Jxa3KX/4
       const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
       //  https://regex101.com/r/hdEpzO/4
       const es6Pattern = /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm
-  
+
       const foundModules = new Set()
-      
+
       while ((match = es6Pattern.exec(sourceCode)) !== null) {
         if (match[6]) foundModules.add(match[6])
       }
-  
+
       while ((match = requirePattern.exec(sourceCode)) !== null) {
         if (match[5]) foundModules.add(match[5])
       }
-      
+
       const moduleJSONURL = (name) => `https://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${name}?attributes=types&x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
       const unpkgURL = (name, path) => `https://www.unpkg.com/${encodeURIComponent(name)}/${encodeURIComponent(path)}`
       const packageJSONURL = (name) => unpkgURL(name, "package.json")
@@ -171,7 +170,7 @@ const LibManager = {
 
 
       /**
-       * Takes an initial module and the path for the root of the typings and grab it and start grabbing its 
+       * Takes an initial module and the path for the root of the typings and grab it and start grabbing its
        * dependencies then add those the to runtime.
        *
        * @param {string} mod The module name
@@ -188,8 +187,8 @@ const LibManager = {
         let content = await dtsResponse.text()
         if (!content) { return errorMsg(`Could not get root d.ts file for the module '${mod}' at ${path}`, dtsResponse) }
 
-        // Now look and grab dependent modules where you need the 
-        // 
+        // Now look and grab dependent modules where you need the
+        //
         await getTypeDependenciesForSourceCode(content, mod, path)
 
         if (isDeno) {
@@ -202,55 +201,55 @@ const LibManager = {
         }
       }
 
-        
+
 
         /**
-         * Takes a module import, then uses both the algolia API and the the package.json to derive 
+         * Takes a module import, then uses both the algolia API and the the package.json to derive
          * the root type def path.
-         * 
-         * @param {string} packageName 
-         * @returns {Promise<{ mod: string, path: string, packageJSON: any }>} 
+         *
+         * @param {string} packageName
+         * @returns {Promise<{ mod: string, path: string, packageJSON: any }>}
          */
       const getModuleAndRootDefTypePath = async (packageName) => {
 
         // For modules
         const url = moduleJSONURL(packageName)
-        
+
         const response = await fetch(url)
         if (!response.ok) { return errorMsg(`Could not get Algolia JSON for the module '${packageName}'`,  response) }
-        
+
         const responseJSON = await response.json()
         if (!responseJSON) { return errorMsg(`Could not get Algolia JSON for the module '${packageName}'`, response) }
-  
+
         if (!responseJSON.types) { return console.log(`There were no types for '${packageName}' - will not try again in this session`)  }
         if (!responseJSON.types.ts) { return console.log(`There were no types for '${packageName}' - will not try again in this session`)  }
-  
+
         this.acquireModuleMetadata[packageName] = responseJSON
-        
+
         if (responseJSON.types.ts === "included") {
           const modPackageURL = packageJSONURL(packageName)
-  
+
           const response = await fetch(modPackageURL)
           if (!response.ok) { return errorMsg(`Could not get Package JSON for the module '${packageName}'`, response) }
-  
+
           const responseJSON = await response.json()
           if (!responseJSON) { return errorMsg(`Could not get Package JSON for the module '${packageName}'`, response) }
-  
+
           // Get the path of the root d.ts file
-  
+
           // non-inferred route
           let rootTypePath = responseJSON.typing || responseJSON.typings || responseJSON.types
-          
-          // package main is custom 
+
+          // package main is custom
           if (!rootTypePath && typeof responseJSON.main === 'string' && responseJSON.main.indexOf('.js') > 0) {
             rootTypePath = responseJSON.main.replace(/js$/, 'd.ts');
           }
-  
+
           // Final fallback, to have got here it must have passed in algolia
           if (!rootTypePath) {
             rootTypePath = "index.d.ts"
           }
-  
+
           return { mod: packageName, path: rootTypePath, packageJSON: responseJSON }
         } else if(responseJSON.types.ts === "definitely-typed") {
           return { mod: responseJSON.types.definitelyTyped, path: "index.d.ts", packageJSON: responseJSON }
@@ -294,11 +293,11 @@ const LibManager = {
         const modIsScopedPackageOnly = moduleDeclaration.indexOf("@") === 0 && moduleDeclaration.split("/").length === 2
         const modIsPackageOnly = moduleDeclaration.indexOf("@") === -1 && moduleDeclaration.split("/").length === 1
         const isPackageRootImport = modIsPackageOnly || modIsScopedPackageOnly
-        
+
         if (isPackageRootImport) {
           return moduleDeclaration
         } else {
-          return  `${outerModule}-${mapRelativePath(outerModule, moduleDeclaration, currentPath)}` 
+          return  `${outerModule}-${mapRelativePath(outerModule, moduleDeclaration, currentPath)}`
         }
       }
 
@@ -316,8 +315,8 @@ const LibManager = {
 
         const moduleID = convertToModuleReferenceID(mod, moduleToDownload, path)
         if (this.acquireModuleMetadata[moduleID] || this.acquireModuleMetadata[moduleID] === null) {
-          return 
-        } 
+          return
+        }
 
         const modIsScopedPackageOnly = moduleToDownload.indexOf("@") === 0 && moduleToDownload.split("/").length === 2
         const modIsPackageOnly = moduleToDownload.indexOf("@") === -1 && moduleToDownload.split("/").length === 1
@@ -330,7 +329,7 @@ const LibManager = {
 
           // E.g. import danger from "danger"
           const packageDef = await getModuleAndRootDefTypePath(moduleToDownload)
-        
+
           if (packageDef) {
             this.acquireModuleMetadata[moduleID] = packageDef.packageJSON
             await addModuleToRuntime(packageDef.mod, packageDef.path)
@@ -341,7 +340,7 @@ const LibManager = {
         } else {
           // E.g. import {Component} from "./MyThing"
           if (!moduleToDownload || !path) throw `No outer module or path for a relative import: ${moduleToDownload}`
-          
+
           const absolutePathForModule = mapRelativePath(mod, moduleToDownload, path)
           // So it doesn't run twice for a package
           this.acquireModuleMetadata[moduleID] = null
@@ -352,7 +351,7 @@ const LibManager = {
       getReferenceDependencies(sourceCode, mod, path)
     }
 
-    // Start diving into the root 
+    // Start diving into the root
     getTypeDependenciesForSourceCode(sourceCode, undefined, undefined)
   }
 };
@@ -652,9 +651,9 @@ async function main() {
       );
 
       const hash = `code/${LZString.compressToEncodedURIComponent(State.inputModel.getValue())}`;
-        
+
       const urlParams = Object.assign({}, diff);
-      
+
       ["lib", "ts"].forEach(param => {
         if (params.has(param)) {
           urlParams[param] = params.get(param);
@@ -695,7 +694,7 @@ async function main() {
     updateEditorStateAfterChange() {
       let inputCode = inputEditor.getValue();
       State.inputModel.dispose();
-      
+
       const language = languageType({ isJS:window.CONFIG.useJavaScript })
       State.inputModel = monaco.editor.createModel(inputCode, language, createFile(compilerOptions));
       inputEditor.setModel(State.inputModel);
@@ -712,7 +711,7 @@ async function main() {
         const code = location.hash.replace("#src=", "").trim();
         return decodeURIComponent(code);
       }
-      
+
       if (location.hash.startsWith("#code")) {
         const code = location.hash.replace("#code/", "").trim();
         return LZString.decompressFromEncodedURIComponent(code);
@@ -769,7 +768,7 @@ console.log(message);
           window.client = client;
           UI.console();
         }
-        
+
         const userInput = State.inputModel
         const sourceCode =  userInput.getValue()
         LibManager.detectNewImportsToAcquireTypeFor(sourceCode)
@@ -885,7 +884,7 @@ class ExampleHighlighter {
     const docRegexLink = /example:([^\s]+)/g;
 
     const links = [];
-    
+
     let match
     while ((match = docRegexLink.exec(text)) !== null) {
       const start = match.index;
