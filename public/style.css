@@ -106,11 +106,11 @@ subheader a {
   position: relative;
 }
 
-.popup-on-hover:hover .popup {
+.popup-on-hover:hover .popup, .popup-on-hover:focus-within .popup {
   display: inline-block;
 }
 
-.popup-on-hover:hover .popup-header {
+.popup-on-hover:hover .popup-header, .popup-on-hover:focus-within .popup-header {
   text-decoration: underline;
   color: #294E80;
 
