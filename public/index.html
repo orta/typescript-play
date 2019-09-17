@@ -21,7 +21,7 @@ body {
         flex: 1; }
 
 @media (max-width: 767px) {
-  
+
   .navbar-logo {
     height: 1.8em !important;
     margin-left: -0.5em !important;
@@ -33,7 +33,7 @@ body {
     font-size: 1.1em; } }
 
 @media (min-width: 768px) {
-  
+
   .navbar-brand {
     top: 5px;
     left: 15px;
@@ -45,7 +45,7 @@ body {
     height: 4.4em !important; } }
 
 @media (min-width: 992px) {
-  
+
   .update-banner {
     padding: 1.2em !important;
     height: 4.2em !important; } }
@@ -217,7 +217,7 @@ img {
         extraLibs: params.has("lib") ? params.get("lib").split(",") : [],
         useJavaScript: params.has("useJavaScript"),
         baseUrl: location.protocol + "//" + location.host + location.pathname,
-
+        siteRoot: location.protocol + "//" + location.host,
         getLatestVersion() {
           return Object.keys(this.availableTSVersions)
             .sort()
@@ -279,13 +279,13 @@ img {
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                   </button>
-    
+
                   <!-- Top-left logo. -->
                   <a class="navbar-brand" href="/index.html" aria-label="TypeScript Home Page">
                     <img class="navbar-logo" src="/assets/images/logo_nocircle.svg">
                   </a>
                 </div>
-    
+
                 <!-- The navigation items. -->
                 <div class="collapse navbar-collapse centered-navbar" id="navbar-collapse-div">
                   <ul class="nav navbar-nav">
@@ -295,7 +295,7 @@ img {
                     <li class="active"><a href="/play/index.html">Playground</a></li>
                   </ul>
                 </div>
-    
+
             </div>
         </nav>
     </header>
@@ -390,7 +390,7 @@ img {
             </div>
 
             <div style="margin-top: 2em;">
-              This version contains a <em>beta version</em> of type acquisition powered by <a href="https://algolia.net">Algolia</a>, 
+              This version contains a <em>beta version</em> of type acquisition powered by <a href="https://algolia.net">Algolia</a>,
               which will try to download types used by <code>import</code>`s in your code. It's not 100% comprehensive, but
               it should cover most use cases.
             </div>

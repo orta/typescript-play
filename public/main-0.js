@@ -484,7 +484,7 @@ async function main() {
     fetchTooltips: async function() {
       try {
         this.toggleSpinner(true);
-        const res = await fetch(`${window.CONFIG.baseUrl}/schema/tsconfig.json`);
+        const res = await fetch(`${window.CONFIG.siteRoot}/play/schema/tsconfig.json`);
         if(!res.ok) return
 
         const json = await res.json();
@@ -614,7 +614,7 @@ async function main() {
     },
 
     downloadExamplesTOC: async function() {
-      const examplesTOCHref = `${window.CONFIG.baseUrl}/examplesTOC.json`
+      const examplesTOCHref = `${window.CONFIG.siteRoot}/examplesTOC.json`
       const res = await fetch(examplesTOCHref);
       if (res.ok) {
         const toc = await res.json()
