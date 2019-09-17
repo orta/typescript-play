@@ -484,7 +484,7 @@ async function main() {
     fetchTooltips: async function() {
       try {
         this.toggleSpinner(true);
-        const res = await fetch(`${window.CONFIG.baseUrl}schema/tsconfig.json`);
+        const res = await fetch(`${window.CONFIG.baseUrl}/schema/tsconfig.json`);
         if(!res.ok) return
 
         const json = await res.json();
@@ -614,20 +614,20 @@ async function main() {
     },
 
     downloadExamplesTOC: async function() {
-      const examplesTOCHref = "/examplesTOC.json"
+      const examplesTOCHref = `${window.CONFIG.baseUrl}/examplesTOC.json`
       const res = await fetch(examplesTOCHref);
       if (res.ok) {
         const toc = await res.json()
         const sections = toc.sections
         const examples = toc.examples
         const sortedSubSections = toc.sortedSubSections
-        
+
         // We've got the JSON representing the TOC
-        // so replace the "loading" html with 
+        // so replace the "loading" html with
         // a real menu.
         const exampleMenu = document.getElementById("examples")
         exampleMenu.removeChild(exampleMenu.children[0])
-        
+
         // const header = document.createElement("h4")
         // header.textContent = "Examples"
         // exampleMenu.appendChild(header)
@@ -661,8 +661,8 @@ async function main() {
             sectionAnchor.classList.add("selected")
 
             const allSections = document.getElementsByClassName("section-content")
-            for (const section of allSections) { 
-              section.style.display = "none" 
+            for (const section of allSections) {
+              section.style.display = "none"
               section.classList.remove("selected")
             }
             sectionContent.style.display = "flex"
@@ -702,24 +702,24 @@ async function main() {
 
             const section = document.createElement("div")
             section.classList.add("section-list")
-            
+
             const sectionTitle = document.createElement("h4")
             sectionTitle.textContent = sectionName
             section.appendChild(sectionTitle)
 
             const sectionExamples = sectionDict[sectionName]
             const sectionExampleContainer = document.createElement("ol")
-            
+
             sectionExamples.sort( (lhs, rhs) => lhs.sortIndex - rhs.sortIndex).forEach(e => {
               const example = document.createElement("li")
-              
+
               const exampleName = document.createElement("a")
               exampleName.textContent = e.title
               exampleName.href = "#"
               exampleName.onclick = (event) => {
                 const isJS = e.name.indexOf(".js") !== -1
                 const prefix = isJS ? "useJavaScript=true" : ""
-                
+
                 const hash = "example/" + e.id
                 const query = prefix + objectToQueryParams(e.compilerSettings)
                 const newLocation = `${document.location.protocol}//${document.location.host}${document.location.pathname}?${query}#${hash}`
@@ -729,7 +729,7 @@ async function main() {
               }
 
               // To help people keep track of what they've seen,
-              // we keep track of what examples they've seen and 
+              // we keep track of what examples they've seen and
               // what the SHA was at the time. This makes it feasible
               // for someone to work their way through the whole set
               const exampleSeen = document.createElement("div") // circle
@@ -752,8 +752,8 @@ async function main() {
             exampleMenu.appendChild(sectionContent)
           })
         })
-        
-      } 
+
+      }
       // set the first selection by default
       const sections = document.getElementsByClassName("section-name")
       sections[0].onclick()
@@ -766,7 +766,7 @@ async function main() {
         if (!res.ok) {
           console.error("Could not fetch example TOC")
           return
-        }  
+        }
 
         const toc = await res.json()
         const example = toc.examples.find(e => e.id === exampleName)
@@ -778,7 +778,7 @@ async function main() {
 
         const codeRes = await fetch(`/ex/en/${example.path.join("/")}/${encodeURIComponent(example.name)}`,);
         let code = await codeRes.text();
-       
+
         // Handle removing the compiler settings stuff
         if (code.startsWith("//// {")) {
           code = code.split("\n").slice(1).join("\n");
@@ -796,7 +796,7 @@ async function main() {
         // this happens behind the scene and isn't visible till you hover
         const sectionTitle = example.path[0]
         const allSectionTitles = document.getElementsByClassName("section-name")
-        for (const title of allSectionTitles) { 
+        for (const title of allSectionTitles) {
           if (title.textContent === sectionTitle)  { title.onclick({}) }
         }
 
@@ -939,7 +939,7 @@ console.log(message);
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
-    Object.assign({ 
+    Object.assign({
       model: State.inputModel,
       theme: themeName
     }, sharedEditorOptions),
@@ -947,8 +947,8 @@ console.log(message);
 
   outputEditor = monaco.editor.create(
     document.getElementById("output"),
-    Object.assign({ 
-      model: State.outputModel,  
+    Object.assign({
+      model: State.outputModel,
       readOnly: window.CONFIG.useJavaScript
     }, sharedEditorOptions),
   );
