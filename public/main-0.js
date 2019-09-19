@@ -715,18 +715,15 @@ async function main() {
 
               const exampleName = document.createElement("a")
               exampleName.textContent = e.title
-              exampleName.href = "#"
-              exampleName.onclick = (event) => {
-                const isJS = e.name.indexOf(".js") !== -1
-                const prefix = isJS ? "useJavaScript=true" : ""
+              const isJS = e.name.indexOf(".js") !== -1
+              const prefix = isJS ? "useJavaScript=true" : ""
 
-                const hash = "example/" + e.id
-                const query = prefix + objectToQueryParams(e.compilerSettings)
-                const newLocation = `${document.location.protocol}//${document.location.host}${document.location.pathname}?${query}#${hash}`
-
-                document.location = newLocation
-                event.preventDefault()
-              }
+              const hash = "example/" + e.id
+              // the e: rand(200) is so that each link has a unique querystring which will force a reload, unlike the hash
+              const query = prefix + objectToQueryParams({...e.compilerSettings, e: Math.round(Math.random() * 200)})
+              const newLocation = `${document.location.protocol}//${document.location.host}${document.location.pathname}?${query}#${hash}`
+              exampleName.href = newLocation
+              exampleName.title = "Open the example " +  e.title
 
               // To help people keep track of what they've seen,
               // we keep track of what examples they've seen and
@@ -757,7 +754,7 @@ async function main() {
       // set the first selection by default
       const sections = document.getElementsByClassName("section-name")
       if (!sections[0]) {
-        console.warning("In dev mode you need to save a file in the examples to get the changes into the dev folder")
+        console.warn("In dev mode you need to save a file in the examples to get the changes into the dev folder")
       } else {
         sections[0].onclick()
       }
@@ -1116,6 +1113,11 @@ class ExampleHighlighter {
 
     return { links };
   }
+
+  resolveLink(link, _token) {
+    console.log("12312321")
+  }
+
 }
 
 // http://stackoverflow.com/questions/1714786/ddg#1714899
