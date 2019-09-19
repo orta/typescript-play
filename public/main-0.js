@@ -756,7 +756,11 @@ async function main() {
       }
       // set the first selection by default
       const sections = document.getElementsByClassName("section-name")
-      sections[0].onclick()
+      if (!sections[0]) {
+        console.warning("In dev mode you need to save a file in the examples to get the changes into the dev folder")
+      } else {
+        sections[0].onclick()
+      }
     },
 
     selectExample: async function(exampleName) {
@@ -918,7 +922,7 @@ console.log(message);
 
   window.MonacoEnvironment = {
     getWorkerUrl: function(workerId, label) {
-      return `worker.js?version=${window.CONFIG.getMonacoVersion()}`;
+      return `worker.js?version=${window.CONFIG.getMonacoVersion()}&editorModule=${window.CONFIG.getMonacoModule()}`;
     },
   };
 
