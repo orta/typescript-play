@@ -357,9 +357,12 @@ const LibManager = {
 };
 
 async function main() {
+  const trueInJS = window.CONFIG.useJavaScript
+  const trueInTS = !window.CONFIG.useJavaScript
+
   const defaultCompilerOptions = {
     noImplicitAny: true,
-    strictNullChecks: true,
+    strictNullChecks: trueInTS,
     strictFunctionTypes: true,
     strictPropertyInitialization: true,
     noImplicitThis: true,
@@ -381,8 +384,8 @@ async function main() {
     removeComments: false,
     skipLibCheck: false,
 
-    checkJs: window.CONFIG.useJavaScript,
-    allowJs: window.CONFIG.useJavaScript,
+    checkJs: trueInJS,
+    allowJs: trueInJS,
 
     experimentalDecorators: false,
     emitDecoratorMetadata: false,
@@ -1113,11 +1116,6 @@ class ExampleHighlighter {
 
     return { links };
   }
-
-  resolveLink(link, _token) {
-    console.log("12312321")
-  }
-
 }
 
 // http://stackoverflow.com/questions/1714786/ddg#1714899
