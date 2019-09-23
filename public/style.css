@@ -50,10 +50,12 @@ subheader a {
 
 #input {
   flex: 1;
+  width: 50%;
 }
 
 #output {
   flex: 1;
+  width: 50%;
 }
 
 #version {
@@ -275,10 +277,10 @@ label {
 
 #examples > div .section-list ol li {
   padding: 0;
-  /* 
+  /*
   So that the example indicators will use
   this for positioning absolutely  */
-  position: relative; 
+  position: relative;
 }
 
 #examples > div .section-list ol li a {
