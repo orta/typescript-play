@@ -723,7 +723,8 @@ async function main() {
 
               const hash = "example/" + e.id
               // the e: rand(200) is so that each link has a unique querystring which will force a reload, unlike the hash
-              const query = prefix + objectToQueryParams({...e.compilerSettings, e: Math.round(Math.random() * 200)})
+              const params = Object.assign(e.compilerSettings || {}, { e: Math.round(Math.random() * 200) })
+              const query = prefix + objectToQueryParams(params)
               const newLocation = `${document.location.protocol}//${document.location.host}${document.location.pathname}?${query}#${hash}`
               exampleName.href = newLocation
               exampleName.title = "Open the example " +  e.title
@@ -947,6 +948,18 @@ console.log(message);
       model: State.inputModel,
       theme: themeName
     }, sharedEditorOptions),
+    {
+      openerService: {
+        registerOpener: () => { },
+        registerValidator: () => {},
+        // Override the custom http url opener to open in the current tab
+        open: (resource, _options) => {
+          const url = decodeURIComponent(resource.toString())
+          document.location = url
+          document.location.reload()
+        }
+      }
+    }
   );
 
   outputEditor = monaco.editor.create(
