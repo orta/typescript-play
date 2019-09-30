@@ -441,7 +441,7 @@ async function main() {
   function createSelect(obj, globalPath, title, compilerOption) {
     return `<label class="select">
     <span class="select-label">${title}</span>
-  <select onchange="console.log(event.target.value); UI.updateCompileOptions('${compilerOption}', ${globalPath}[event.target.value]);">
+  <select onchange="console.log(event.target.value); UI.updateCompileOptions('${compilerOption}', ${globalPath}[event.target.value]); event.stopPropagation();">
   ${Object.keys(obj)
     .filter(key => isNaN(Number(key)))
     .map(key => {
@@ -506,38 +506,36 @@ async function main() {
     },
 
     renderAvailableVersions() {
-      const node = document.querySelector("#version-popup");
+      const node = document.querySelector("#versions");
       const html = `
-    <ul class="versions">
+
     ${Object.keys(window.CONFIG.availableTSVersions)
+      .filter(v => v !== "Nightly")
       .sort()
       .reverse()
       .map(version => {
-        return `<li class="button" onclick="javascript:UI.selectVersion('${version}');">${version}</li>`;
+        return `<li class="button" onclick="javascript:UI.selectVersion('${version}');"><a href="#">${version}</a></li>`;
       })
       .join("\n")}
-    </ul>
+
+      <li role="separator" class="divider"></li>
+      <li class="button" onclick="javascript:UI.selectVersion('Nightly');"><a href="#">Nightly</a></li>
     `;
 
       node.innerHTML = html;
     },
 
     renderVersion() {
-      const node = document.querySelector("#version");
-      const childNode = node.querySelector("#version-current");
-
-      childNode.textContent = `${window.CONFIG.TSVersion}`;
-
-      node.style.opacity = 1;
-      node.classList.toggle("popup-on-hover", true);
+      const childNode = document.querySelector("#active-version");
+      childNode.innerHTML = `v${window.CONFIG.TSVersion} <span class="caret"></span>`;
 
       this.toggleSpinner(false);
     },
 
     toggleSpinner(shouldShow) {
-      document
-        .querySelector(".spinner")
-        .classList.toggle("spinner--hidden", !shouldShow);
+      // document
+      //   .querySelector(".spinner")
+      //   .classList.toggle("spinner--hidden", !shouldShow);
     },
 
     updateIsJavaScript(shouldUseJS) {
@@ -547,7 +545,7 @@ async function main() {
     },
 
     renderSettings() {
-      const node = document.querySelector("#settings-popup");
+      const node = document.querySelector("#config");
       const isJS = window.CONFIG.useJavaScript
       const html = `
       ${createSelect(
@@ -566,19 +564,20 @@ async function main() {
       <br />
       <label class="select">
         <span class="select-label">Lang</span>
-        <select onchange="UI.updateIsJavaScript(event.target.value === 'JavaScript')")>;
+        <select onchange="UI.updateIsJavaScript(event.target.value === 'JavaScript'); event.stopPropagation();")>;
           <option>TypeScript</option>
           <option ${window.CONFIG.useJavaScript ? "selected" : ""}>JavaScript</option>
         </select>
       </label>
 
     <hr/>
+    <p>Compiler options from the TS Config</p>
     <ul style="margin-top: 1em;">
     ${Object.entries(compilerOptions)
       .filter(([_, value]) => typeof value === "boolean")
       .map(([key, value]) => {
         return `<li style="margin: 0; padding: 0; ${isJS ? "opacity: 0.5" : ""}" title="${UI.tooltips[key] ||
-          ""}"><label class="button" style="user-select: none; display: block;"><input class="pointer" onchange="javascript:UI.updateCompileOptions(event.target.name, event.target.checked);" name="${key}" type="checkbox" ${
+          ""}"><label class="button" style="user-select: none; display: block;"><input class="pointer" onchange="javascript:UI.updateCompileOptions(event.target.name, event.target.checked);event.stopPropagation();" name="${key}" type="checkbox" ${
           value ? "checked" : ""
         }></input>${key}</label></li>`;
       })
@@ -657,7 +656,7 @@ async function main() {
           // Handle clicking on a section title, moved
           // further down so we can access the corresponding
           // content section element.
-          sectionAnchor.onclick = () => {
+          sectionAnchor.onclick = (e) => {
             // Visible selection
             const allSectionTitles = document.getElementsByClassName("section-name")
             for (const title of allSectionTitles) { title.classList.remove("selected") }
@@ -670,6 +669,10 @@ async function main() {
             }
             sectionContent.style.display = "flex"
             sectionContent.classList.add("selected")
+
+            if (e && e.stopPropagation) {
+              e.stopPropagation()
+            }
           }
 
           const sectionSubtitle = document.createElement("p")

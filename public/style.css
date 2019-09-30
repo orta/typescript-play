@@ -226,6 +226,16 @@ label {
   padding: 20px;
 }
 
+.navbar-sub .dropdown-menu {
+  color: black;
+}
+
+.navbar-sub div.info {
+  color: black;
+  padding: 20px;
+  width: 320px;
+}
+
 /* JS / TS selector */
 #examples > ol {
   display: flex;
@@ -246,6 +256,7 @@ label {
 #examples > ol li {
   display: inline-block;
   padding:0;
+  margin-bottom: 20px;
 }
 
 #examples > ol button.section-name {
@@ -312,4 +323,26 @@ label {
 
 .example-indicator.changed {
   border: #187ABF 1px solid;
+}
+
+
+#config ul {
+  padding: 0;
+}
+
+#config li {
+  list-style: none;
+}
+
+#config input {
+  margin-right: 8px;
+}
+
+.navbar-sub {
+  border-bottom: 1px solid #294E80;
+  border-radius: 0;
+}
+
+.navbar-sub .nav>li>a:focus, .navbar-sub.nav>li>a:hover {
+  border-bottom: 1px solid #294E80;
 }
