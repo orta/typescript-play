@@ -545,6 +545,12 @@ async function main() {
     },
 
     renderSettings() {
+      const focused = document.activeElement
+      let nameToFocus = null
+      if (focused && focused.name) {
+        nameToFocus = focused.name
+      }
+
       const node = document.querySelector("#config");
       const isJS = window.CONFIG.useJavaScript
       const html = `
@@ -591,6 +597,10 @@ async function main() {
     `;
 
       node.innerHTML = html;
+
+      if(nameToFocus) {
+        window.config.querySelector(`input[name=${nameToFocus}]`).focus()
+      }
     },
 
     console() {
