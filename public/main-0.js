@@ -933,8 +933,6 @@ console.log(message);
 
   const defaults = monacoLanguageDefaults({ isJS: window.CONFIG.useJavaScript })
   defaults.setCompilerOptions(compilerOptions)
-  const themeName = "typescript-playground"
-  monaco.editor.defineTheme(themeName, theme);
 
   const language = languageType({ isJS:  window.CONFIG.useJavaScript })
   State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
@@ -946,7 +944,6 @@ console.log(message);
     document.getElementById("input"),
     Object.assign({
       model: State.inputModel,
-      theme: themeName
     }, sharedEditorOptions),
     {
       openerService: {
