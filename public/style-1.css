@@ -221,7 +221,7 @@ label {
   z-index: 2000 !important;
 }
 
-#examples {
+.examples {
   width: 800px;
   padding: 20px;
 }
@@ -237,29 +237,29 @@ label {
 }
 
 /* JS / TS selector */
-#examples > ol {
+.examples > ol {
   display: flex;
   padding-left: 0;
 }
 
-#examples ol {
+.examples ol {
   list-style: none;
   padding-right: 20px;
   padding-left: 0;
 }
 
 
-#examples > div {
+.examples > div {
   flex-wrap: wrap;
 }
 
-#examples > ol li {
+.examples > ol li {
   display: inline-block;
   padding:0;
   margin-bottom: 20px;
 }
 
-#examples > ol button.section-name {
+.examples > ol button.section-name {
   font-size: 2em;
   height: 2em;
   text-decoration: none;
@@ -271,22 +271,21 @@ label {
   background-color: transparent;
 }
 
-#examples > ol li:hover {
+.examples > ol li:hover {
  background-color: transparent;
 }
 
-#examples > ol button.section-name.selected {
+.examples > ol button.section-name.selected {
   border-bottom: #187ABF 2px solid;
 }
 
 /* Block of sections */
-#examples > div .section-list {
+.examples > div .section-list {
   width: 240px;
   margin-top: 2em;
-
 }
 
-#examples > div .section-list ol li {
+.examples > div .section-list ol li {
   padding: 0;
   /*
   So that the example indicators will use
@@ -294,7 +293,7 @@ label {
   position: relative;
 }
 
-#examples > div .section-list ol li a {
+.examples > div .section-list ol li a {
   display: block;
   padding: 8px;
   padding-left: 10px;
@@ -303,7 +302,7 @@ label {
   border-bottom: none;
 }
 
-#examples > div .section-list ol li a:hover {
+.examples > div .section-list ol li a:hover {
   color: black;
   font-weight: bold;
 }

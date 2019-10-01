@@ -638,16 +638,23 @@ async function main() {
         // so replace the "loading" html with
         // a real menu.
         const exampleMenu = document.getElementById("examples")
+        const whatIsNewMenu = document.getElementById("whatisnew")
+
+        // Set up two equivalent menu dropdowns
+
         exampleMenu.removeChild(exampleMenu.children[0])
+        whatIsNewMenu.removeChild(whatIsNewMenu.children[0])
 
-        // const header = document.createElement("h4")
-        // header.textContent = "Examples"
-        // exampleMenu.appendChild(header)
+        const examplesSectionOL = document.createElement("ol")
+        exampleMenu.appendChild(examplesSectionOL)
 
-        const sectionUL = document.createElement("ol")
-        exampleMenu.appendChild(sectionUL)
+        const whatisNewSectionOL = document.createElement("ol")
+        whatIsNewMenu.appendChild(whatisNewSectionOL)
 
         sections.forEach((s, i) => {
+          const sectionUL = s.whatisnew ? whatisNewSectionOL : examplesSectionOL
+          const sectionBody = s.whatisnew ? whatIsNewMenu : exampleMenu
+
           // Set up the TS/JS selection links at the top
           const sectionHeader = document.createElement("li")
           const sectionAnchor = document.createElement("button")
@@ -668,11 +675,11 @@ async function main() {
           // content section element.
           sectionAnchor.onclick = (e) => {
             // Visible selection
-            const allSectionTitles = document.getElementsByClassName("section-name")
+            const allSectionTitles = sectionUL.querySelectorAll(".section-name")
             for (const title of allSectionTitles) { title.classList.remove("selected") }
             sectionAnchor.classList.add("selected")
 
-            const allSections = document.getElementsByClassName("section-content")
+            const allSections = sectionBody.querySelectorAll(".section-content")
             for (const section of allSections) {
               section.style.display = "none"
               section.classList.remove("selected")
@@ -695,7 +702,10 @@ async function main() {
           // an array of corresponding examples
           const sectionDict = {}
           examples.forEach(e => {
-            if (e.path[0] !== s.name) return;
+            // Allow switching a "-" to "." so that titles can have
+            // a dot for version numbers, this own works once.
+            if (e.path[0] !== s.name.replace(".", "-")) return;
+
             if (sectionDict[e.path[1]]) {
               sectionDict[e.path[1]].push(e)
             } else {
@@ -763,7 +773,7 @@ async function main() {
 
             section.appendChild(sectionExampleContainer)
             sectionContent.appendChild(section)
-            exampleMenu.appendChild(sectionContent)
+            sectionBody.appendChild(sectionContent)
           })
         })
 
@@ -773,7 +783,11 @@ async function main() {
       if (!sections[0]) {
         console.warn("In dev mode you need to save a file in the examples to get the changes into the dev folder")
       } else {
-        sections[0].onclick()
+        const exampleMenu = document.getElementById("examples")
+        const whatIsNewMenu = document.getElementById("whatisnew")
+
+        exampleMenu.querySelector(".section-name").onclick()
+        whatIsNewMenu.querySelector(".section-name").onclick()
       }
     },
 
@@ -1030,6 +1044,13 @@ console.log(message);
 
   UI.renderAvailableVersions();
 
+  // You already have these, it's just reaching into the require cache
+  require(["vs/language/typescript/tsWorker"], () => {
+    require(["vs/language/typescript/lib/typescriptServices"], () => {
+      window.ts = ts
+    })
+  })
+
   /* Run */
   document.getElementById("run").onclick = () => runJavaScript()
   function runJavaScript() {
@@ -1141,6 +1162,8 @@ class ExampleHighlighter {
   }
 }
 
+
+
 // http://stackoverflow.com/questions/1714786/ddg#1714899
 function objectToQueryParams(obj) {
   const str = []
@@ -1150,6 +1173,7 @@ function objectToQueryParams(obj) {
     }
   return str.join("&");
 }
+
 
 
 
