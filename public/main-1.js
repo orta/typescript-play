@@ -484,6 +484,18 @@ async function main() {
       }, 1000);
     },
 
+    openDropdownsOnLaunchIfNeeded() {
+      console.log("launch", location.hash)
+      if (location.hash.startsWith("#show-examples")) {
+        document.getElementById("examples").parentElement.children[0].click()
+      }
+  
+      if (location.hash.startsWith("#show-whatisnew")) {
+        // Get to whatisnew, then the sibling a which needs clicking on
+        document.getElementById("whatisnew").parentElement.children[0].click()
+      }
+    },
+
     fetchTooltips: async function() {
       try {
         this.toggleSpinner(true);
@@ -1038,6 +1050,7 @@ console.log(message);
   });
 
   UI.downloadExamplesTOC()
+  UI.openDropdownsOnLaunchIfNeeded()
 
   updateOutput();
   inputEditor.onDidChangeModelContent(() => {
