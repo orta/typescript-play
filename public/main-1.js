@@ -638,16 +638,23 @@ async function main() {
         // so replace the "loading" html with
         // a real menu.
         const exampleMenu = document.getElementById("examples")
+        const whatIsNewMenu = document.getElementById("whatisnew")
+
+        // Set up two equivalent menu dropdowns
+
         exampleMenu.removeChild(exampleMenu.children[0])
+        whatIsNewMenu.removeChild(whatIsNewMenu.children[0])
 
-        // const header = document.createElement("h4")
-        // header.textContent = "Examples"
-        // exampleMenu.appendChild(header)
+        const examplesSectionOL = document.createElement("ol")
+        exampleMenu.appendChild(examplesSectionOL)
 
-        const sectionUL = document.createElement("ol")
-        exampleMenu.appendChild(sectionUL)
+        const whatisNewSectionOL = document.createElement("ol")
+        whatIsNewMenu.appendChild(whatisNewSectionOL)
 
         sections.forEach((s, i) => {
+          const sectionUL = s.whatisnew ? whatisNewSectionOL : examplesSectionOL
+          const sectionBody = s.whatisnew ? whatIsNewMenu : exampleMenu
+
           // Set up the TS/JS selection links at the top
           const sectionHeader = document.createElement("li")
           const sectionAnchor = document.createElement("button")
@@ -668,11 +675,11 @@ async function main() {
           // content section element.
           sectionAnchor.onclick = (e) => {
             // Visible selection
-            const allSectionTitles = document.getElementsByClassName("section-name")
+            const allSectionTitles = sectionUL.querySelectorAll(".section-name")
             for (const title of allSectionTitles) { title.classList.remove("selected") }
             sectionAnchor.classList.add("selected")
 
-            const allSections = document.getElementsByClassName("section-content")
+            const allSections = sectionBody.querySelectorAll(".section-content")
             for (const section of allSections) {
               section.style.display = "none"
               section.classList.remove("selected")
@@ -686,7 +693,7 @@ async function main() {
           }
 
           const sectionSubtitle = document.createElement("p")
-          sectionSubtitle.textContent = s.subtitle
+          sectionSubtitle.innerHTML = s.subtitle
           sectionSubtitle.style.width = "100%"
           sectionContent.appendChild(sectionSubtitle)
 
@@ -695,7 +702,10 @@ async function main() {
           // an array of corresponding examples
           const sectionDict = {}
           examples.forEach(e => {
-            if (e.path[0] !== s.name) return;
+            // Allow switching a "-" to "." so that titles can have
+            // a dot for version numbers, this own works once.
+            if (e.path[0] !== s.name.replace(".", "-")) return;
+
             if (sectionDict[e.path[1]]) {
               sectionDict[e.path[1]].push(e)
             } else {
@@ -763,7 +773,7 @@ async function main() {
 
             section.appendChild(sectionExampleContainer)
             sectionContent.appendChild(section)
-            exampleMenu.appendChild(sectionContent)
+            sectionBody.appendChild(sectionContent)
           })
         })
 
@@ -773,7 +783,11 @@ async function main() {
       if (!sections[0]) {
         console.warn("In dev mode you need to save a file in the examples to get the changes into the dev folder")
       } else {
-        sections[0].onclick()
+        const exampleMenu = document.getElementById("examples")
+        const whatIsNewMenu = document.getElementById("whatisnew")
+
+        exampleMenu.querySelector(".section-name").onclick()
+        whatIsNewMenu.querySelector(".section-name").onclick()
       }
     },
 
@@ -953,6 +967,9 @@ console.log(message);
   const outputDefault = window.CONFIG.useJavaScript ? "// Using JavaScript, no compilation needed." : ""
   State.outputModel = monaco.editor.createModel(outputDefault, "javascript", monaco.Uri.file("output.js"));
 
+  monaco.editor.defineTheme("sandbox", sandboxTheme)
+  monaco.editor.setTheme("sandbox")
+
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
     Object.assign({
@@ -1029,6 +1046,13 @@ console.log(message);
   UI.shouldUpdateHash = true;
 
   UI.renderAvailableVersions();
+
+  // You already have these, it's just reaching into the require cache
+  require(["vs/language/typescript/tsWorker"], () => {
+    require(["vs/language/typescript/lib/typescriptServices"], () => {
+      window.ts = ts
+    })
+  })
 
   /* Run */
   document.getElementById("run").onclick = () => runJavaScript()
@@ -1141,6 +1165,8 @@ class ExampleHighlighter {
   }
 }
 
+
+
 // http://stackoverflow.com/questions/1714786/ddg#1714899
 function objectToQueryParams(obj) {
   const str = []
@@ -1152,4 +1178,76 @@ function objectToQueryParams(obj) {
 }
 
 
+// Color theme:
 
+const blue = "3771EF";
+const darkerBlue = "1142AF";
+const darkestBlue = "09235D";
+
+const yellow = "F3DF51";
+const darkYellow = "AEA811";
+const darkerYellow = "65610A";
+
+const grey = "84864d";
+const green = "12CD0E";
+const greenDark = "10990D";
+const greenLight = "54F351";
+
+const sandboxTheme = {
+  base: "vs",
+  inherit: true,
+  rules: [
+    { token: "", foreground: "000000", background: "fffffe" },
+    { token: "invalid", foreground: "cd3131" },
+    { token: "emphasis", fontStyle: "italic" },
+    { token: "strong", fontStyle: "bold" },
+
+    { token: "variable", foreground: "11bb11" },
+    { token: "variable.predefined", foreground: "4864AA" },
+    { token: "constant", foreground: "44ee11" },
+    { token: "comment", foreground: grey },
+    { token: "number", foreground: greenDark },
+    { token: "number.hex", foreground: "3030c0" },
+    { token: "regexp", foreground: greenLight },
+    { token: "annotation", foreground: "808080" },
+    { token: "type", foreground: darkerBlue },
+
+    { token: "delimiter", foreground: "000000" },
+    { token: "delimiter.html", foreground: "383838" },
+    { token: "delimiter.xml", foreground: "0000FF" },
+
+    { token: "tag", foreground: "800000" },
+    { token: "tag.id.pug", foreground: "4F76AC" },
+    { token: "tag.class.pug", foreground: "4F76AC" },
+    { token: "meta.scss", foreground: "800000" },
+    { token: "metatag", foreground: "e00000" },
+    { token: "metatag.content.html", foreground: "FF0000" },
+    { token: "metatag.html", foreground: "808080" },
+    { token: "metatag.xml", foreground: "808080" },
+    { token: "metatag.php", fontStyle: "bold" },
+
+    { token: "key", foreground: "863B00" },
+    { token: "string.key.json", foreground: "A31515" },
+    { token: "string.value.json", foreground: "0451A5" },
+
+    { token: "attribute.name", foreground: "FFFF00" },
+    { token: "attribute.value", foreground: "0451A5" },
+    { token: "attribute.value.number", foreground: "09885A" },
+    { token: "attribute.value.unit", foreground: "09885A" },
+    { token: "attribute.value.html", foreground: "0000FF" },
+    { token: "attribute.value.xml", foreground: "0000FF" },
+
+    { token: "string", foreground: greenDark },
+
+    { token: "keyword", foreground: blue },
+    { token: "keyword.json", foreground: "0451A5" }
+  ],
+  colors: {
+    editorBackground: "#F6F6F6",
+    editorForeground: "#000000",
+    editorInactiveSelection: "#E5EBF1",
+    editorIndentGuides: "#D3D3D3",
+    editorActiveIndentGuides: "#939393",
+    editorSelectionHighlight: "#ADD6FF4D"
+  }
+};

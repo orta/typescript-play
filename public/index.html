@@ -224,7 +224,7 @@ img {
         siteRoot: location.protocol + "//" + location.host,
         getLatestVersion() {
           return Object.keys(this.availableTSVersions)
-            .filter(key => key !== "Nightly" && !key.includes("Beta"))
+            .filter(key => key !== "Nightly" && !key.includes("-"))
             .sort()
             .pop();
         },
@@ -337,15 +337,22 @@ img {
 
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Examples <span class="caret"></span></a>
-                <ul class="dropdown-menu" id="examples">
+                <ul class="dropdown-menu examples" id="examples" >
                   <li><a href="#">Loading Examples...</a></li>
                 </ul>
               </li>
 
-
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">What's new <span class="caret"></span></a>
+                <ul class="dropdown-menu examples" id="whatisnew">
+                  <li><a href="#">Loading Examples...</a></li>
+                </ul>
+              </li>
 
               <li><a href="#" id="run">Run</a></li>
+            </ul>
 
+            <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Shortcuts <span class="caret"></span></a>
                 <ul class="dropdown-menu">
@@ -367,33 +374,31 @@ img {
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">About <span class="caret"></span></a>
                 <ul class="dropdown-menu">
                   <div class="info">
-                    <div>
+                    <p>
                       TypeScript is a typed superset of JavaScript that compiles to
                       plain JavaScript.
-                    </div>
+                    </p>
 
-                    <div style="margin-top: 2em;">
+                    <p style="margin-top: 2em;">
                       Playground allows you to compile TypeScript and see JavaScript
                       output, as well as inspect how your code works in editors like VS Code
-                    </div>
+                    </p>
 
-                    <div style="margin-top: 2em;">
+                    <p style="margin-top: 2em;">
                       This version contains a <em>beta version</em> of type acquisition powered by <a href="https://algolia.net">Algolia</a>,
                       which will try to download types used by <code>import</code>`s in your code. It's not 100% comprehensive, but
                       it should cover most use cases.
-                    </div>
+                    </p>
 
-                    <div style="margin-top: 2em;">
+                    <p style="margin-top: 2em;">
                       Adapted from <a href="https://github.com/agentcooper/typescript-play">agentcooper/typescript-play</a> with
                       code viewable at <a href="https://github.com/orta/typescript-play/tree/old-site-integration">orta/typescript-play</a>.
-                    </div>
+                    </p>
                   </div>
                 </ul>
               </li>
-
-
-
             </ul>
+
           </div><!-- /.navbar-collapse -->
         </div><!-- /.container-fluid -->
       </nav>
