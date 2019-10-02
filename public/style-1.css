@@ -17,6 +17,10 @@ body ol li {
   line-height: 1em;
 }
 
+.navbar p {
+  line-height: 1.5em;
+}
+
 subheader {
   display: flex;
   background-color: #ddd;
@@ -226,6 +230,10 @@ label {
   padding: 20px;
 }
 
+.navbar-sub {
+  margin-bottom: 0px;
+}
+
 .navbar-sub .dropdown-menu {
   color: black;
 }
@@ -341,6 +349,3 @@ label {
   border-radius: 0;
 }
 
-.navbar-sub .nav>li>a:focus, .navbar-sub.nav>li>a:hover {
-  border-bottom: 1px solid #294E80;
-}
