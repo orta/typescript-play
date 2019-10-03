@@ -1,3 +1,5 @@
+/// <reference types="monaco-editor" />
+
 // whoa, no typescript and no compilation!
 
 const globalishObj = typeof globalThis !== 'undefined' ? globalThis : window || {}
@@ -425,7 +427,8 @@ async function main() {
     minimap: { enabled: false },
     automaticLayout: true,
     scrollBeyondLastLine: true,
-    scrollBeyondLastColumn: 3
+    scrollBeyondLastColumn: 3,
+    formatOnType: true
   };
 
   const State = {
@@ -485,13 +488,14 @@ async function main() {
     },
 
     openDropdownsOnLaunchIfNeeded() {
-      console.log("launch", location.hash)
+      // Let's you send a link with the following hashes to automatically
+      // show dropdowns.
+
       if (location.hash.startsWith("#show-examples")) {
         document.getElementById("examples").parentElement.children[0].click()
       }
-  
+
       if (location.hash.startsWith("#show-whatisnew")) {
-        // Get to whatisnew, then the sibling a which needs clicking on
         document.getElementById("whatisnew").parentElement.children[0].click()
       }
     },
@@ -753,6 +757,8 @@ async function main() {
 
               const exampleName = document.createElement("a")
               exampleName.textContent = e.title
+              exampleName.classList.add("example-link")
+
               const isJS = e.name.indexOf(".js") !== -1
               const prefix = isJS ? "useJavaScript=true" : ""
 
@@ -842,6 +848,13 @@ async function main() {
         const allSectionTitles = document.getElementsByClassName("section-name")
         for (const title of allSectionTitles) {
           if (title.textContent === sectionTitle)  { title.onclick({}) }
+        }
+
+        const allLinks = document.getElementsByClassName("example-link")
+        for (const link of allLinks) {
+          if (link.textContent === example.title) {
+            link.classList.add("highlight")
+          }
         }
 
         document.title = "TypeScript Playground - " + example.title
@@ -1117,30 +1130,7 @@ console.log(message);
   );
 
   function prettier() {
-    const PRETTIER_VERSION = "1.14.3";
-
-    require([
-      `https://unpkg.com/prettier@${PRETTIER_VERSION}/standalone.js`,
-      `https://unpkg.com/prettier@${PRETTIER_VERSION}/parser-typescript.js`,
-    ], function(prettier, { parsers }) {
-      const cursorOffset = State.inputModel.getOffsetAt(
-        inputEditor.getPosition(),
-      );
-
-      const formatResult = prettier.formatWithCursor(
-        State.inputModel.getValue(),
-        {
-          parser: parsers.typescript.parse,
-          cursorOffset,
-        },
-      );
-
-      State.inputModel.setValue(formatResult.formatted);
-      const newPosition = State.inputModel.getPositionAt(
-        formatResult.cursorOffset,
-      );
-      inputEditor.setPosition(newPosition);
-    });
+    inputEditor.getAction('editor.action.formatDocument').run()
   }
 }
 

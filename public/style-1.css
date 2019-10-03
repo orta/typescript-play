@@ -301,6 +301,12 @@ label {
   position: relative;
 }
 
+.examples > div .section-list ol li a.highlight {
+  border-left: #187ABF 2px solid;
+  padding-left: 8px;
+}
+
+
 .examples > div .section-list ol li a {
   display: block;
   padding: 8px;
@@ -312,7 +318,6 @@ label {
 
 .examples > div .section-list ol li a:hover {
   color: black;
-  font-weight: bold;
 }
 
 .example-indicator {
