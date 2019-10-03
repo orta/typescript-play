@@ -367,6 +367,7 @@ async function main() {
     strictNullChecks: trueInTS,
     strictFunctionTypes: true,
     strictPropertyInitialization: true,
+    strictBindCallApply: true,
     noImplicitThis: true,
     noImplicitReturns: true,
 
@@ -881,6 +882,11 @@ async function main() {
       UI.shouldUpdateHash = true;
     },
 
+    removeLoadingIndicator() {
+      const loading = document.getElementById("loading")
+      loading.parentElement.removeChild(loading)
+    },
+
     updateURL() {
       const diff = Object.entries(defaultCompilerOptions).reduce(
         (acc, [key, value]) => {
@@ -1055,6 +1061,7 @@ console.log(message);
     UI.storeCurrentCodeInLocalStorage()
   }
 
+  UI.removeLoadingIndicator()
   UI.setCodeFromHash();
 
   UI.renderSettings();
