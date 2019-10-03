@@ -382,7 +382,7 @@ async function main() {
     noUnusedLocals: false,
     noUnusedParameters: false,
 
-    esModuleInterop: false,
+    esModuleInterop: true,
     preserveConstEnums: false,
     removeComments: false,
     skipLibCheck: false,
@@ -510,10 +510,8 @@ async function main() {
         const json = await res.json();
         this.toggleSpinner(false);
 
-        for (const [propertyName, property] of Object.entries(
-          json.definitions.compilerOptionsDefinition.properties.compilerOptions
-            .properties,
-        )) {
+        const properties = Object.entries(json.definitions.compilerOptionsDefinition.properties.compilerOptions.properties)
+        for (const [propertyName, property] of properties) {
           this.tooltips[propertyName] = property.description;
         }
       } catch (e) {
