@@ -909,6 +909,15 @@ async function main() {
         }
       });
 
+      // Support sending the selection
+      const s = inputEditor.getSelection()
+      if (s.selectionStartLineNumber !== s.positionLineNumber || s.selectionStartColumn !== s.positionColumn) {
+        urlParams["ssl"] = s.selectionStartLineNumber
+        urlParams["ssc"] = s.selectionStartColumn
+        urlParams["pln"] = s.positionLineNumber
+        urlParams["pc"] = s.positionColumn
+      }
+
       if (window.CONFIG.useJavaScript) urlParams["useJavaScript"] = true
 
       if (Object.keys(urlParams).length > 0) {
@@ -1019,6 +1028,20 @@ console.log(message);
       }
     }
   );
+
+  inputEditor.onDidChangeCursorSelection(() => {
+    UI.updateURL()
+  })
+
+
+  // Set selection in the editor from
+  if (document.location.search.includes("ssl=")) {
+    const qs = new URLSearchParams(document.location.search)
+    const s = new monaco.Selection(Number(qs.get("ssl")), Number(qs.get("ssc")), Number(qs.get("pln")), Number(qs.get("pc")))
+    console.log(s)
+    inputEditor.setSelection(s)
+  }
+
 
   outputEditor = monaco.editor.create(
     document.getElementById("output"),
