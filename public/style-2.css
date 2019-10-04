@@ -234,6 +234,10 @@ label {
   margin-bottom: 0px;
 }
 
+.navbar-sub .navbar-nav > li {
+  float: left;
+}
+
 .navbar-sub .dropdown-menu {
   color: black;
 }

@@ -6,6 +6,9 @@
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" crossorigin="anonymous">
 
+    <!-- Enable responsiveness on mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="style-2.css" />
     <link rel="shortcut icon" href="favicon.ico" />
     <style type="text/css">
@@ -318,8 +321,6 @@ img {
 
       <nav class="navbar navbar-sub" style="margin-top: 50px;">
         <div class="container-fluid">
-
-          <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
               <li  class="dropdown version">
                 <a id="active-version" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Version...</a>
@@ -349,10 +350,10 @@ img {
                 </ul>
               </li>
 
-              <li><a href="#" id="run">Run</a></li>
+              <li class="hidden-xs"><a href="#" id="run">Run</a></li>
             </ul>
 
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right hidden-xs">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Shortcuts <span class="caret"></span></a>
                 <ul class="dropdown-menu">
@@ -399,7 +400,6 @@ img {
               </li>
             </ul>
 
-          </div><!-- /.navbar-collapse -->
         </div><!-- /.container-fluid -->
       </nav>
 
@@ -410,7 +410,7 @@ img {
 
       <main id="playground">
         <section id="input"></section>
-        <section id="output"></section>
+        <section id="output" class="hidden-xs"></section>
       </main>
     </div>
 
