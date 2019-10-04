@@ -1028,7 +1028,11 @@ console.log(message);
   );
 
   inputEditor.onDidChangeCursorSelection(() => {
-    UI.updateURL()
+    // Wait till there's a drag to trigger the URL update
+    const s = inputEditor.getSelection()
+    if (s.selectionStartLineNumber !== s.positionLineNumber || s.selectionStartColumn !== s.positionColumn) {
+      UI.updateURL()
+    }
   })
 
 
