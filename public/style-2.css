@@ -242,6 +242,11 @@ label {
   color: black;
 }
 
+.navbar-sub .dropdown.open .dropdown-menu {
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
+}
+
 .navbar-sub div.info {
   color: black;
   padding: 20px;
