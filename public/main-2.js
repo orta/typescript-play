@@ -395,6 +395,7 @@ async function main() {
 
     target: monaco.languages.typescript.ScriptTarget.ES2017,
     jsx: monaco.languages.typescript.JsxEmit.None,
+    module: monaco.languages.typescript.ModuleKind.ESNext,
   };
 
   const urlDefaults = Object.entries(defaultCompilerOptions).reduce(
@@ -581,6 +582,13 @@ async function main() {
         "monaco.languages.typescript.JsxEmit",
         "JSX",
         "jsx",
+      )}
+      <br />
+      ${createSelect(
+        monaco.languages.typescript.ModuleKind,
+        "monaco.languages.typescript.ModuleKind",
+        "Module",
+        "module",
       )}
       <br />
       <label class="select">
