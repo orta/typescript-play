@@ -108,7 +108,7 @@ const LibManager = {
       // blocked by https://github.com/microsoft/monaco-typescript/pull/38
       //
       // https://regex101.com/r/Jxa3KX/4
-      const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/
+      const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/gm
       //  https://regex101.com/r/hdEpzO/4
       const es6Pattern = /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm
 
@@ -119,7 +119,7 @@ const LibManager = {
       }
 
       while ((match = requirePattern.exec(sourceCode)) !== null) {
-        if (match[5]) foundModules.add(match[5])
+        if (match[4]) foundModules.add(match[4])
       }
 
       const moduleJSONURL = (name) => `https://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${encodeURIComponent(name)}?attributes=types&x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`
