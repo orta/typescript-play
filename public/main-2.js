@@ -1028,8 +1028,11 @@ console.log(message);
         // Override the custom http url opener to open in the current tab
         open: (resource, _options) => {
           const url = decodeURIComponent(resource.toString())
+          const sameSite = url.includes(document.location.host)
           document.location = url
-          document.location.reload()
+          if (sameSite) {
+             document.location.reload()
+          }
         }
       }
     }
