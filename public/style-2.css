@@ -247,6 +247,13 @@ label {
   max-height: calc(100vh - 150px);
 }
 
+@media only screen and (max-width: 767px) {
+  /* Makes the subnav fit one line on mobile */
+  .navbar-sub .navbar-nav > li {
+    font-size: 0.9em;
+  }
+}
+
 .navbar-sub div.info {
   color: black;
   padding: 20px;
