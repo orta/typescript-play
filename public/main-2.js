@@ -911,7 +911,13 @@ async function main() {
 
       ["lib", "ts"].forEach(param => {
         if (params.has(param)) {
-          urlParams[param] = params.get(param);
+          // Special case the nightly where it uses the TS version to hardcode
+          // the nightly build
+          if (param === "ts" && params.get(param) === "Nightly") {
+            urlParams[param] = window.ts.version
+          } else {
+            urlParams[param] = params.get(param);
+          }
         }
       });
 

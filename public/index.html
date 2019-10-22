@@ -243,11 +243,7 @@ img {
         },
 
         useTSVersion(version) {
-          if (this.availableTSVersions[version]) {
-            this.TSVersion = version;
-          } else {
-            this.TSVersion = "PR"
-          }
+          this.TSVersion = version
         },
 
         getMonacoModule() {
