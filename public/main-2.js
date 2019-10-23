@@ -1138,6 +1138,7 @@ console.log(message);
     const model = isJS ? State.inputModel : State.outputModel
     setTimeout(() => {
       eval(model.getValue());
+      UI.showFlashMessage("Code ran. Check the console")
     }, 0);
   }
 
