@@ -1182,7 +1182,85 @@ console.log(message);
   function prettier() {
     inputEditor.getAction('editor.action.formatDocument').run()
   }
+
+  const exporter = () =>  {
+    // Based on https://github.com/stackblitz/core/blob/master/sdk/src/generate.ts
+    function createHiddenInput(name, value){
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      return input;
+    }
+
+    function createProjectForm(project){
+      const form = document.createElement('form');
+
+      form.method = 'POST';
+      form.setAttribute('style', 'display:none;');
+
+      form.appendChild(createHiddenInput('project[title]', project.title));
+      form.appendChild(createHiddenInput('project[description]', project.description));
+      form.appendChild(createHiddenInput('project[template]', project.template));
+
+      if (project.tags){
+        project.tags.forEach(tag => {
+          form.appendChild(createHiddenInput('project[tags][]', tag));
+        });
+      }
+
+      if (project.dependencies){
+        form.appendChild(createHiddenInput('project[dependencies]', JSON.stringify(project.dependencies)));
+      }
+
+      if (project.settings){
+        form.appendChild(createHiddenInput('project[settings]', JSON.stringify(project.settings)));
+      }
+
+      Object.keys(project.files).forEach(path => {
+        form.appendChild(createHiddenInput(`project[files][${path}]`, project.files[path]));
+      });
+
+      return form;
+    }
+
+    const typescriptVersion = (window.ts && window.ts.version) || window.CONFIG.TSVersion
+    // TODO: pull deps
+    function openProjectInStackBlitz(){
+      const project = {
+        title: "Playground Export - ",
+        description: "123",
+        template: "typescript",
+        files: {
+          "index.ts": State.inputModel.getValue(),
+          "tsconfig.json": JSON.stringify({ compilerOptions: compilerOptions }, null, "  ")
+        },
+        dependencies: {
+          "typescript": typescriptVersion
+        }
+
+      }
+      const form = createProjectForm(project);
+      form.action = "https://stackblitz.com/run?view=editor"
+      // https://github.com/stackblitz/core/blob/master/sdk/src/helpers.ts#L9
+      // + buildProjectQuery(options);
+      form.target = '_blank'
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    }
+
+
+    return {
+      openProjectInStackBlitz
+    }
+  }
+
+  window.exporter = exporter()
 }
+
+
 
 class ExampleHighlighter {
   provideLinks(model, _cancelToken) {
