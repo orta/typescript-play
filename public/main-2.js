@@ -1315,6 +1315,19 @@ console.log(message);
       .then(data => { window.open('https://codesandbox.io/s/'+data.sandbox_id, '_blank'); });
     }
 
+    function makeMarkDown() {
+      return `**TypeScript ${typescriptVersion}**\n`
+        + `[Playground link](${window.location})\n`
+        + `\nCompiler Options:\n`
+        + `\`\`\`json\n${stringifiedCompilerOptions}\n\`\`\`\n`
+        + `\n**Input:**\n`
+        + `\`\`\`typescript\n${State.inputModel.getValue()}\n\`\`\`\n`
+        + `\n**Output:**\n`
+        + `\`\`\`javascript\n${State.outputModel.getValue()}\n\`\`\`\n`
+        + `\n**Expected behavior:**\n`
+        ;
+    }
+
 
     return {
       openProjectInStackBlitz,
