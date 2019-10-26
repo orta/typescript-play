@@ -1334,11 +1334,18 @@ console.log(message);
       window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
     }
 
+    function copyAsMarkdown() {
+      if ("clipboard" in navigator) {
+        navigator.clipboard.writeText(makeMarkdown());
+      }
+    }
+
 
     return {
       openProjectInStackBlitz,
       openProjectInCodeSandbox,
-      reportIssue
+      reportIssue,
+      copyAsMarkdown
     }
   }
 
