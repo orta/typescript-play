@@ -1303,16 +1303,33 @@ console.log(message);
         }
       };
 
-      fetch("https://codesandbox.io/api/v1/sandboxes/define?json=1", {
-        method: "POST",
-        body: JSON.stringify({ files }),
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json"
-        }
-      })
-      .then(x => x.json())
-      .then(data => { window.open('https://codesandbox.io/s/'+data.sandbox_id, '_blank'); });
+      // Using the v1 get API
+      const parameters = LZString.compressToBase64(JSON.stringify({ files }))
+        .replace(/\+/g, "-") // Convert '+' to '-'
+        .replace(/\//g, "_") // Convert '/' to '_'
+        .replace(/=+$/, ""); // Remove ending '='
+
+      const url = `https://codesandbox.io/api/v1/sandboxes/define?view=editor&parameters=${parameters}`;
+      document.location = url
+
+      // Alternative using the http URL API, which uses POST. This has the trade-off where
+      // the async nature of the call means that the redirect at the end triggers
+      // popup security mechanisms in browsers because the function isn't blessed as
+      // being a direct result of a user action.
+
+      // fetch("https://codesandbox.io/api/v1/sandboxes/define?json=1", {
+      //   method: "POST",
+      //   body: JSON.stringify({ files }),
+      //   headers: {
+      //     Accept: "application/json",
+      //     "Content-Type": "application/json"
+      //   }
+      // })
+      // .then(x => x.json())
+      // .then(data => { 
+      //   window.open('https://codesandbox.io/s/' + data.sandbox_id, '_blank'); 
+      // });
+
     }
 
     function makeMarkdown() {
