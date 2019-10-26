@@ -1315,7 +1315,7 @@ console.log(message);
       .then(data => { window.open('https://codesandbox.io/s/'+data.sandbox_id, '_blank'); });
     }
 
-    function makeMarkDown() {
+    function makeMarkdown() {
       return `**TypeScript ${typescriptVersion}**\n`
         + `[Playground link](${window.location})\n`
         + `\nCompiler Options:\n`
@@ -1328,10 +1328,17 @@ console.log(message);
         ;
     }
 
+    function reportIssue() {
+      const body = makeMarkdown();
+
+      window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
+    }
+
 
     return {
       openProjectInStackBlitz,
-      openProjectInCodeSandbox
+      openProjectInCodeSandbox,
+      reportIssue
     }
   }
 
