@@ -1184,6 +1184,36 @@ console.log(message);
   }
 
   const exporter = () =>  {
+    function getScriptTargetText(option) {
+      if (option === monaco.languages.typescript.ScriptTarget.None) { return undefined; }
+      return monaco.languages.typescript.ScriptTarget[option];
+    }
+
+    function getJsxEmitText(option) {
+      if (option === monaco.languages.typescript.JsxEmit.None) { return undefined; }
+      return monaco.languages.typescript.JsxEmit[option];
+    }
+
+    function getModuleKindText(option) {
+      if (option === monaco.languages.typescript.ModuleKind.None) { return undefined; }
+      return monaco.languages.typescript.ModuleKind[option];
+    }
+
+    function getValidCompilerOptions(options) {
+      const {target: targetOption, jsx: jsxOption, module: moduleOption, ...restOptions} = options;
+
+      const targetText = getScriptTargetText(targetOption);
+      const jsxText = getJsxEmitText(jsxOption);
+      const moduleText = getModuleKindText(moduleOption);
+
+      return {
+        ...restOptions,
+        ...(targetText && {target: targetText}),
+        ...(jsxText && {jsx: jsxText}),
+        ...(moduleText && {module: moduleText}),
+      };
+    }
+
     // Based on https://github.com/stackblitz/core/blob/master/sdk/src/generate.ts
     function createHiddenInput(name, value){
       const input = document.createElement('input');
@@ -1225,6 +1255,8 @@ console.log(message);
     }
 
     const typescriptVersion = (window.ts && window.ts.version) || window.CONFIG.TSVersion
+    const stringifiedCompilerOptions = JSON.stringify({ compilerOptions: getValidCompilerOptions(compilerOptions)}, null, "  ");
+
     // TODO: pull deps
     function openProjectInStackBlitz(){
       const project = {
@@ -1233,7 +1265,7 @@ console.log(message);
         template: "typescript",
         files: {
           "index.ts": State.inputModel.getValue(),
-          "tsconfig.json": JSON.stringify({ compilerOptions: compilerOptions }, null, "  ")
+          "tsconfig.json":stringifiedCompilerOptions,
         },
         dependencies: {
           "typescript": typescriptVersion
@@ -1251,9 +1283,42 @@ console.log(message);
       document.body.removeChild(form);
     }
 
+    function openProjectInCodeSandbox(){
+      const files = {
+        "package.json": {
+          content: {
+            name: "TypeScript Playground Export",
+            version: "0.0.0",
+            description: "TypeScript playground exported Sandbox",
+            dependencies: {
+              "typescript": typescriptVersion
+            }
+          }
+        },
+        "index.ts": {
+          content: State.inputModel.getValue()
+        },
+        "tsconfig.json": {
+          content: stringifiedCompilerOptions
+        }
+      };
+
+      fetch("https://codesandbox.io/api/v1/sandboxes/define?json=1", {
+        method: "POST",
+        body: JSON.stringify({ files }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        }
+      })
+      .then(x => x.json())
+      .then(data => { window.open('https://codesandbox.io/s/'+data.sandbox_id, '_blank'); });
+    }
+
 
     return {
-      openProjectInStackBlitz
+      openProjectInStackBlitz,
+      openProjectInCodeSandbox
     }
   }
 
