@@ -998,6 +998,67 @@ const message: string = 'hello world';
 console.log(message);
   `.trim();
     },
+
+    showModal(code) {
+      const existingPopover = document.getElementById("popover-modal")
+      if (existingPopover) existingPopover.parentElement.removeChild(existingPopover)
+
+      const modalBG = document.createElement("div")
+      modalBG.id = "popover-background"
+      document.body.appendChild(modalBG)
+
+      const modal = document.createElement("div")
+      modal.id = "popover-modal"
+
+      const pre = document.createElement("pre")
+      modal.appendChild(pre)
+      pre.textContent = code
+
+      const copyButton = document.createElement("button")
+      copyButton.innerText = "Copy"
+      modal.appendChild(copyButton)
+      
+      const closeButton = document.createElement("button")
+      closeButton.innerText = "Close"
+      modal.appendChild(closeButton)
+
+      document.body.appendChild(modal)
+
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const close = () => {
+        modalBG.parentNode.removeChild(modalBG)
+        modal.parentNode.removeChild(modal)
+        document.onkeydown = undefined
+      }
+
+      const copy = () => {
+        navigator.clipboard.writeText(code);
+      }
+
+      modalBG.onclick = close
+      closeButton.onclick = close
+      copyButton.onclick = copy
+
+      // Support hiding the modal via escape
+      document.onkeydown = function(evt) {
+        evt = evt || window.event;
+        var isEscape = false;
+        if ("key" in evt) {
+            isEscape = (evt.key === "Escape" || evt.key === "Esc");
+        } else {
+            isEscape = (evt.keyCode === 27);
+        }
+        if (isEscape) {
+            close()
+        }
+    };
+
+    }
   };
 
   window.MonacoEnvironment = {
@@ -1265,7 +1326,7 @@ console.log(message);
         template: "typescript",
         files: {
           "index.ts": State.inputModel.getValue(),
-          "tsconfig.json":stringifiedCompilerOptions,
+          "tsconfig.json": stringifiedCompilerOptions,
         },
         dependencies: {
           "typescript": typescriptVersion
@@ -1351,18 +1412,32 @@ console.log(message);
       window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
     }
 
-    function copyAsMarkdown() {
-      if ("clipboard" in navigator) {
-        navigator.clipboard.writeText(makeMarkdown());
-      }
+    function copyAsMarkdownIssue() {
+        const markdown = makeMarkdown();
+        UI.showModal(markdown)
     }
 
+    function copyForChat() {
+      const chat = `[Playground Link](${window.location})`
+      UI.showModal(chat)
+    }
+
+    function copyForChatWithPreview() {
+      const ts = State.inputModel.getValue()
+      const preview = (ts.length > 200) ? ts.substring(0, 200) + "..." : ts.substring(0, 200)
+      
+      const code = "```\n" + preview + "\n```\n"
+      const chat = `${code}\n[Playground Link](${window.location})`
+      UI.showModal(chat)
+    }
 
     return {
       openProjectInStackBlitz,
       openProjectInCodeSandbox,
       reportIssue,
-      copyAsMarkdown
+      copyAsMarkdownIssue,
+      copyForChat,
+      copyForChatWithPreview
     }
   }
 
