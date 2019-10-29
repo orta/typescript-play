@@ -998,6 +998,67 @@ const message: string = 'hello world';
 console.log(message);
   `.trim();
     },
+
+    showModal(code) {
+      const existingPopover = document.getElementById("popover-modal")
+      if (existingPopover) existingPopover.parentElement.removeChild(existingPopover)
+
+      const modalBG = document.createElement("div")
+      modalBG.id = "popover-background"
+      document.body.appendChild(modalBG)
+
+      const modal = document.createElement("div")
+      modal.id = "popover-modal"
+
+      const pre = document.createElement("pre")
+      modal.appendChild(pre)
+      pre.textContent = code
+
+      const copyButton = document.createElement("button")
+      copyButton.innerText = "Copy"
+      modal.appendChild(copyButton)
+      
+      const closeButton = document.createElement("button")
+      closeButton.innerText = "Close"
+      modal.appendChild(closeButton)
+
+      document.body.appendChild(modal)
+
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const close = () => {
+        modalBG.parentNode.removeChild(modalBG)
+        modal.parentNode.removeChild(modal)
+        document.onkeydown = undefined
+      }
+
+      const copy = () => {
+        navigator.clipboard.writeText(code);
+      }
+
+      modalBG.onclick = close
+      closeButton.onclick = close
+      copyButton.onclick = copy
+
+      // Support hiding the modal via escape
+      document.onkeydown = function(evt) {
+        evt = evt || window.event;
+        var isEscape = false;
+        if ("key" in evt) {
+            isEscape = (evt.key === "Escape" || evt.key === "Esc");
+        } else {
+            isEscape = (evt.keyCode === 27);
+        }
+        if (isEscape) {
+            close()
+        }
+    };
+
+    }
   };
 
   window.MonacoEnvironment = {
@@ -1182,7 +1243,208 @@ console.log(message);
   function prettier() {
     inputEditor.getAction('editor.action.formatDocument').run()
   }
+
+  const exporter = () =>  {
+    function getScriptTargetText(option) {
+      if (option === monaco.languages.typescript.ScriptTarget.None) { return undefined; }
+      return monaco.languages.typescript.ScriptTarget[option];
+    }
+
+    function getJsxEmitText(option) {
+      if (option === monaco.languages.typescript.JsxEmit.None) { return undefined; }
+      return monaco.languages.typescript.JsxEmit[option];
+    }
+
+    function getModuleKindText(option) {
+      if (option === monaco.languages.typescript.ModuleKind.None) { return undefined; }
+      return monaco.languages.typescript.ModuleKind[option];
+    }
+
+    function getValidCompilerOptions(options) {
+      const {target: targetOption, jsx: jsxOption, module: moduleOption, ...restOptions} = options;
+
+      const targetText = getScriptTargetText(targetOption);
+      const jsxText = getJsxEmitText(jsxOption);
+      const moduleText = getModuleKindText(moduleOption);
+
+      return {
+        ...restOptions,
+        ...(targetText && {target: targetText}),
+        ...(jsxText && {jsx: jsxText}),
+        ...(moduleText && {module: moduleText}),
+      };
+    }
+
+    // Based on https://github.com/stackblitz/core/blob/master/sdk/src/generate.ts
+    function createHiddenInput(name, value){
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      return input;
+    }
+
+    function createProjectForm(project){
+      const form = document.createElement('form');
+
+      form.method = 'POST';
+      form.setAttribute('style', 'display:none;');
+
+      form.appendChild(createHiddenInput('project[title]', project.title));
+      form.appendChild(createHiddenInput('project[description]', project.description));
+      form.appendChild(createHiddenInput('project[template]', project.template));
+
+      if (project.tags){
+        project.tags.forEach(tag => {
+          form.appendChild(createHiddenInput('project[tags][]', tag));
+        });
+      }
+
+      if (project.dependencies){
+        form.appendChild(createHiddenInput('project[dependencies]', JSON.stringify(project.dependencies)));
+      }
+
+      if (project.settings){
+        form.appendChild(createHiddenInput('project[settings]', JSON.stringify(project.settings)));
+      }
+
+      Object.keys(project.files).forEach(path => {
+        form.appendChild(createHiddenInput(`project[files][${path}]`, project.files[path]));
+      });
+
+      return form;
+    }
+
+    const typescriptVersion = (window.ts && window.ts.version) || window.CONFIG.TSVersion
+    const stringifiedCompilerOptions = JSON.stringify({ compilerOptions: getValidCompilerOptions(compilerOptions)}, null, "  ");
+
+    // TODO: pull deps
+    function openProjectInStackBlitz(){
+      const project = {
+        title: "Playground Export - ",
+        description: "123",
+        template: "typescript",
+        files: {
+          "index.ts": State.inputModel.getValue(),
+          "tsconfig.json": stringifiedCompilerOptions,
+        },
+        dependencies: {
+          "typescript": typescriptVersion
+        }
+
+      }
+      const form = createProjectForm(project);
+      form.action = "https://stackblitz.com/run?view=editor"
+      // https://github.com/stackblitz/core/blob/master/sdk/src/helpers.ts#L9
+      // + buildProjectQuery(options);
+      form.target = '_blank'
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    }
+
+    function openProjectInCodeSandbox(){
+      const files = {
+        "package.json": {
+          content: {
+            name: "TypeScript Playground Export",
+            version: "0.0.0",
+            description: "TypeScript playground exported Sandbox",
+            dependencies: {
+              "typescript": typescriptVersion
+            }
+          }
+        },
+        "index.ts": {
+          content: State.inputModel.getValue()
+        },
+        "tsconfig.json": {
+          content: stringifiedCompilerOptions
+        }
+      };
+
+      // Using the v1 get API
+      const parameters = LZString.compressToBase64(JSON.stringify({ files }))
+        .replace(/\+/g, "-") // Convert '+' to '-'
+        .replace(/\//g, "_") // Convert '/' to '_'
+        .replace(/=+$/, ""); // Remove ending '='
+
+      const url = `https://codesandbox.io/api/v1/sandboxes/define?view=editor&parameters=${parameters}`;
+      document.location = url
+
+      // Alternative using the http URL API, which uses POST. This has the trade-off where
+      // the async nature of the call means that the redirect at the end triggers
+      // popup security mechanisms in browsers because the function isn't blessed as
+      // being a direct result of a user action.
+
+      // fetch("https://codesandbox.io/api/v1/sandboxes/define?json=1", {
+      //   method: "POST",
+      //   body: JSON.stringify({ files }),
+      //   headers: {
+      //     Accept: "application/json",
+      //     "Content-Type": "application/json"
+      //   }
+      // })
+      // .then(x => x.json())
+      // .then(data => { 
+      //   window.open('https://codesandbox.io/s/' + data.sandbox_id, '_blank'); 
+      // });
+
+    }
+
+    function makeMarkdown() {
+      return `**TypeScript ${typescriptVersion}**\n`
+        + `[Playground link](${window.location})\n`
+        + `\nCompiler Options:\n`
+        + `\`\`\`json\n${stringifiedCompilerOptions}\n\`\`\`\n`
+        + `\n**Input:**\n`
+        + `\`\`\`typescript\n${State.inputModel.getValue()}\n\`\`\`\n`
+        + `\n**Output:**\n`
+        + `\`\`\`javascript\n${State.outputModel.getValue()}\n\`\`\`\n`
+        + `\n**Expected behavior:**\n`
+        ;
+    }
+
+    function reportIssue() {
+      const body = makeMarkdown();
+
+      window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
+    }
+
+    function copyAsMarkdownIssue() {
+        const markdown = makeMarkdown();
+        UI.showModal(markdown)
+    }
+
+    function copyForChat() {
+      const chat = `[Playground Link](${window.location})`
+      UI.showModal(chat)
+    }
+
+    function copyForChatWithPreview() {
+      const ts = State.inputModel.getValue()
+      const preview = (ts.length > 200) ? ts.substring(0, 200) + "..." : ts.substring(0, 200)
+      
+      const code = "```\n" + preview + "\n```\n"
+      const chat = `${code}\n[Playground Link](${window.location})`
+      UI.showModal(chat)
+    }
+
+    return {
+      openProjectInStackBlitz,
+      openProjectInCodeSandbox,
+      reportIssue,
+      copyAsMarkdownIssue,
+      copyForChat,
+      copyForChatWithPreview
+    }
+  }
+
+  window.exporter = exporter()
 }
+
+
 
 class ExampleHighlighter {
   provideLinks(model, _cancelToken) {
