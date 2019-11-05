@@ -455,6 +455,16 @@ img {
         e.stopPropagation();
       });
 
+      // So that the CSS for a theme is applied before monaco is loaded
+      const theme = localStorage.getItem("editor-theme")
+      // So dark and dark-hc can share CSS
+      if (theme === "dark-hc") {
+          document.body.classList.add("dark")
+          document.body.classList.add("hc")
+        } else {
+          document.body.classList.add(theme)
+      }
+
     </script>
 
 
