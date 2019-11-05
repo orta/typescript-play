@@ -431,3 +431,43 @@ label {
   max-height: 90%;
   overflow: scroll;;
 }
+
+/* Adds a tickbox to the selected theme */
+
+.current-theme:before {
+  /* prepend check mark */
+  content: "\2713  ";
+}
+
+.current-theme {
+  margin-left: -1em;
+}
+
+body.dark {
+  background-color: #1e1e1e;
+}
+
+body.dark .nav a {
+  color: white;
+}
+
+body.dark .dropdown-menu {
+  background-color: black;
+  color: white;
+}
+
+body.dark .navbar-sub div.info {
+  color: white;
+}
+
+body.dark .nav>li>a:focus, body.dark .nav>li>a:hover {
+  background-color: #4e4e4e;
+}
+
+body.dark .dropdown-menu>li>a:focus, body.dark  .dropdown-menu>li>a:hover {
+  background-color: #4e4e4e;
+}
+
+body.dark.hc {
+  background-color: black;
+}
