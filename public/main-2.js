@@ -526,7 +526,7 @@ async function main() {
       const html = `
 
     ${Object.keys(window.CONFIG.availableTSVersions)
-      .filter(v => v !== "Nightly")
+      .filter(v => v !== "Nightly" && !window.CONFIG.availableTSVersions[v].hide)
       .sort()
       .reverse()
       .map(version => {
