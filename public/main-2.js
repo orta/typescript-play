@@ -1017,7 +1017,7 @@ console.log(message);
       const copyButton = document.createElement("button")
       copyButton.innerText = "Copy"
       modal.appendChild(copyButton)
-      
+
       const closeButton = document.createElement("button")
       closeButton.innerText = "Close"
       modal.appendChild(closeButton)
@@ -1389,8 +1389,8 @@ console.log(message);
       //   }
       // })
       // .then(x => x.json())
-      // .then(data => { 
-      //   window.open('https://codesandbox.io/s/' + data.sandbox_id, '_blank'); 
+      // .then(data => {
+      //   window.open('https://codesandbox.io/s/' + data.sandbox_id, '_blank');
       // });
 
     }
@@ -1427,7 +1427,7 @@ console.log(message);
     function copyForChatWithPreview() {
       const ts = State.inputModel.getValue()
       const preview = (ts.length > 200) ? ts.substring(0, 200) + "..." : ts.substring(0, 200)
-      
+
       const code = "```\n" + preview + "\n```\n"
       const chat = `${code}\n[Playground Link](${window.location})`
       UI.showModal(chat)
@@ -1504,6 +1504,7 @@ function setEditorTheme(theme) {
     ? localStorage.getItem("editor-theme") || "light"
     : "light";
   monaco.editor.setTheme(newTheme);
+
   document
     .querySelectorAll("a[id^=theme-]")
     .forEach(anchor =>
@@ -1511,7 +1512,18 @@ function setEditorTheme(theme) {
         ? anchor.classList.add("current-theme")
         : anchor.classList.remove("current-theme")
     );
+
   localStorage.setItem("editor-theme", newTheme);
+
+  // Sets the theme on the body so CSS can change between themes
+  document.body.classList.remove("light", "dark", "hc")
+  // So dark and dark-hc can share CSS
+  if (newTheme === "dark-hc") {
+    document.body.classList.add("dark")
+    document.body.classList.add("hc")
+  } else {
+    document.body.classList.add(newTheme)
+  }
 }
 
 const blue = "3771EF";
