@@ -371,6 +371,9 @@ async function main() {
     noImplicitThis: true,
     noImplicitReturns: true,
 
+    // 3.7 off, 3.8 on I think
+    useDefineForClassFields: false,
+
     alwaysStrict: true,
     allowUnreachableCode: false,
     allowUnusedLabels: false,
@@ -1346,6 +1349,11 @@ console.log(message);
       document.body.removeChild(form);
     }
 
+    function openInTSAST() {
+      const hash = `#code/${LZString.compressToEncodedURIComponent(State.inputModel.getValue())}`;
+      document.location = `https://ts-ast-viewer.com/${hash}`
+    }
+
     function openProjectInCodeSandbox(){
       const files = {
         "package.json": {
@@ -1439,7 +1447,8 @@ console.log(message);
       reportIssue,
       copyAsMarkdownIssue,
       copyForChat,
-      copyForChatWithPreview
+      copyForChatWithPreview,
+      openInTSAST
     }
   }
 
