@@ -468,7 +468,11 @@ body.dark .nav>li>a:focus, body.dark .nav>li>a:hover {
   background-color: #4e4e4e;
 }
 
-body.dark .dropdown-menu>li>a:focus, body.dark  .dropdown-menu>li>a:hover {
+body.dark .dropdown-menu>li>a:focus, body.dark .dropdown-menu>li>a:hover {
+  background-color: #4e4e4e;
+}
+
+body.dark .nav .open>a, body.dark .nav .open>a:focus, body.dark .nav .open>a:hover {
   background-color: #4e4e4e;
 }
 
