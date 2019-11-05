@@ -456,6 +456,10 @@ body.dark .dropdown-menu {
   color: white;
 }
 
+body.dark .select select {
+  color: black;
+}
+
 body.dark .navbar-sub div.info {
   color: white;
 }
