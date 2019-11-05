@@ -431,3 +431,8 @@ label {
   max-height: 90%;
   overflow: scroll;;
 }
+
+.current-theme:before {
+  /* prepend check mark */
+  content: "\2713  ";
+}

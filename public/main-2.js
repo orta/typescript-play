@@ -1080,8 +1080,10 @@ console.log(message);
   const outputDefault = window.CONFIG.useJavaScript ? "// Using JavaScript, no compilation needed." : ""
   State.outputModel = monaco.editor.createModel(outputDefault, "javascript", monaco.Uri.file("output.js"));
 
-  monaco.editor.defineTheme("sandbox", sandboxTheme)
-  monaco.editor.setTheme("sandbox")
+  for (const [themeName, theme] of Object.entries(editorThemes)) {
+    monaco.editor.defineTheme(themeName, theme)
+  }
+  setEditorTheme()
 
   inputEditor = monaco.editor.create(
     document.getElementById("input"),
@@ -1495,6 +1497,23 @@ function objectToQueryParams(obj) {
 
 // Color theme:
 
+function setEditorTheme(theme) {
+  const newTheme = theme
+    ? theme
+    : localStorage
+    ? localStorage.getItem("editor-theme") || "light"
+    : "light";
+  monaco.editor.setTheme(newTheme);
+  document
+    .querySelectorAll("a[id^=theme-]")
+    .forEach(anchor =>
+      anchor.id === `theme-${newTheme}`
+        ? anchor.classList.add("current-theme")
+        : anchor.classList.remove("current-theme")
+    );
+  localStorage.setItem("editor-theme", newTheme);
+}
+
 const blue = "3771EF";
 const darkerBlue = "1142AF";
 const darkestBlue = "09235D";
@@ -1508,61 +1527,75 @@ const green = "12CD0E";
 const greenDark = "10990D";
 const greenLight = "54F351";
 
-const sandboxTheme = {
-  base: "vs",
-  inherit: true,
-  rules: [
-    { token: "", foreground: "000000", background: "fffffe" },
-    { token: "invalid", foreground: "cd3131" },
-    { token: "emphasis", fontStyle: "italic" },
-    { token: "strong", fontStyle: "bold" },
+const editorThemes = {
+  light: {
+    base: "vs",
+    inherit: true,
+    rules: [
+      { token: "", foreground: "000000", background: "fffffe" },
+      { token: "invalid", foreground: "cd3131" },
+      { token: "emphasis", fontStyle: "italic" },
+      { token: "strong", fontStyle: "bold" },
 
-    { token: "variable", foreground: "11bb11" },
-    { token: "variable.predefined", foreground: "4864AA" },
-    { token: "constant", foreground: "44ee11" },
-    { token: "comment", foreground: grey },
-    { token: "number", foreground: greenDark },
-    { token: "number.hex", foreground: "3030c0" },
-    { token: "regexp", foreground: greenLight },
-    { token: "annotation", foreground: "808080" },
-    { token: "type", foreground: darkerBlue },
+      { token: "variable", foreground: "11bb11" },
+      { token: "variable.predefined", foreground: "4864AA" },
+      { token: "constant", foreground: "44ee11" },
+      { token: "comment", foreground: grey },
+      { token: "number", foreground: greenDark },
+      { token: "number.hex", foreground: "3030c0" },
+      { token: "regexp", foreground: greenLight },
+      { token: "annotation", foreground: "808080" },
+      { token: "type", foreground: darkerBlue },
 
-    { token: "delimiter", foreground: "000000" },
-    { token: "delimiter.html", foreground: "383838" },
-    { token: "delimiter.xml", foreground: "0000FF" },
+      { token: "delimiter", foreground: "000000" },
+      { token: "delimiter.html", foreground: "383838" },
+      { token: "delimiter.xml", foreground: "0000FF" },
 
-    { token: "tag", foreground: "800000" },
-    { token: "tag.id.pug", foreground: "4F76AC" },
-    { token: "tag.class.pug", foreground: "4F76AC" },
-    { token: "meta.scss", foreground: "800000" },
-    { token: "metatag", foreground: "e00000" },
-    { token: "metatag.content.html", foreground: "FF0000" },
-    { token: "metatag.html", foreground: "808080" },
-    { token: "metatag.xml", foreground: "808080" },
-    { token: "metatag.php", fontStyle: "bold" },
+      { token: "tag", foreground: "800000" },
+      { token: "tag.id.pug", foreground: "4F76AC" },
+      { token: "tag.class.pug", foreground: "4F76AC" },
+      { token: "meta.scss", foreground: "800000" },
+      { token: "metatag", foreground: "e00000" },
+      { token: "metatag.content.html", foreground: "FF0000" },
+      { token: "metatag.html", foreground: "808080" },
+      { token: "metatag.xml", foreground: "808080" },
+      { token: "metatag.php", fontStyle: "bold" },
 
-    { token: "key", foreground: "863B00" },
-    { token: "string.key.json", foreground: "A31515" },
-    { token: "string.value.json", foreground: "0451A5" },
+      { token: "key", foreground: "863B00" },
+      { token: "string.key.json", foreground: "A31515" },
+      { token: "string.value.json", foreground: "0451A5" },
 
-    { token: "attribute.name", foreground: "FFFF00" },
-    { token: "attribute.value", foreground: "0451A5" },
-    { token: "attribute.value.number", foreground: "09885A" },
-    { token: "attribute.value.unit", foreground: "09885A" },
-    { token: "attribute.value.html", foreground: "0000FF" },
-    { token: "attribute.value.xml", foreground: "0000FF" },
+      { token: "attribute.name", foreground: "FFFF00" },
+      { token: "attribute.value", foreground: "0451A5" },
+      { token: "attribute.value.number", foreground: "09885A" },
+      { token: "attribute.value.unit", foreground: "09885A" },
+      { token: "attribute.value.html", foreground: "0000FF" },
+      { token: "attribute.value.xml", foreground: "0000FF" },
 
-    { token: "string", foreground: greenDark },
+      { token: "string", foreground: greenDark },
 
-    { token: "keyword", foreground: blue },
-    { token: "keyword.json", foreground: "0451A5" }
-  ],
-  colors: {
-    editorBackground: "#F6F6F6",
-    editorForeground: "#000000",
-    editorInactiveSelection: "#E5EBF1",
-    editorIndentGuides: "#D3D3D3",
-    editorActiveIndentGuides: "#939393",
-    editorSelectionHighlight: "#ADD6FF4D"
+      { token: "keyword", foreground: blue },
+      { token: "keyword.json", foreground: "0451A5" }
+    ],
+    colors: {
+      editorBackground: "#F6F6F6",
+      editorForeground: "#000000",
+      editorInactiveSelection: "#E5EBF1",
+      editorIndentGuides: "#D3D3D3",
+      editorActiveIndentGuides: "#939393",
+      editorSelectionHighlight: "#ADD6FF4D"
+    }
+  },
+  dark: {
+    base: "vs-dark",
+    inherit: true,
+    rules: [],
+    colors: {},
+  },
+  "dark-hc": {
+    base: "hc-black",
+    inherit: true,
+    rules: [],
+    colors: {},
   }
 };
