@@ -988,7 +988,7 @@ async function main() {
         let userCode = LZString.decompressFromEncodedURIComponent(code)
         // Fallback incase there is an extra level of decoding:
         // https://gitter.im/Microsoft/TypeScript?at=5dc478ab9c39821509ff189a
-        if (!userCode) LZString.decompressFromEncodedURIComponent(decodeURIComponent(code))
+        if (!userCode) userCode = LZString.decompressFromEncodedURIComponent(decodeURIComponent(code))
         return userCode;
       }
 
