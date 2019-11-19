@@ -388,12 +388,14 @@ img {
                   <div class="info">
                   <script>
                     const isMac = navigator.userAgent.indexOf("Mac OS X") != -1;
-                    const CMDCtrl = isMac ? "⌘" : "Ctrl";
-                    const OptionAlt = isMac ? "⌥" : "Alt";
+                    const CMDCtrl = isMac ? "⌘ command" : "Ctrl";
+                    const OptionAlt = isMac ? "⌥ option" : "Alt";
+                    const Enter = isMac ? "return" : "⏎ Enter";
+                    const Shift = isMac ? "shift" : "⇧ Shift";
 
-                    document.write(`<p><kbd>Use ${CMDCtrl} + Enter</kbd> to run compiled JavaScript in the browser console.</p>`);
-                    document.write(`<p style="margin-top: 2em;"><kbd>Use ${CMDCtrl} + S</kbd> to copy code url to the clipboard.</p>`);
-                    document.write(`<p style="margin-top: 2em;"><kbd>Use ${OptionAlt} + Shift + F</kbd> to format your code.</p>`);
+                    document.write(`<p>Use <kbd>${CMDCtrl}</kbd> + <kbd>${Enter}</kbd> to run compiled JavaScript in the browser console.</p>`);
+                    document.write(`<p style="margin-top: 2em;">Use <kbd>${CMDCtrl}</kbd> + <kbd>S</kbd> to copy code url to the clipboard.</p>`);
+                    document.write(`<p style="margin-top: 2em;">Use <kbd>${OptionAlt}</kbd> + <kbd>${Shift}</kbd> + <kbd>F</kbd> to format your code.</p>`);
                   </script>
                   </div>
                 </ul>
