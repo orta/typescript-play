@@ -1152,7 +1152,7 @@ console.log(message);
     document.getElementById("output"),
     Object.assign({
       model: State.outputModel,
-      readOnly: window.CONFIG.useJavaScript
+      readOnly: true
     }, sharedEditorOptions),
   );
 
