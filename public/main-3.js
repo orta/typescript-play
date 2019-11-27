@@ -392,6 +392,7 @@ async function main() {
 
     checkJs: trueInJS,
     allowJs: trueInJS,
+    declaration: true,
 
     experimentalDecorators: false,
     emitDecoratorMetadata: false,
@@ -1152,7 +1153,7 @@ console.log(message);
     document.getElementById("output"),
     Object.assign({
       model: State.outputModel,
-      readOnly: window.CONFIG.useJavaScript
+      readOnly: true
     }, sharedEditorOptions),
   );
 
@@ -1174,9 +1175,16 @@ console.log(message);
         const sourceCode =  userInput.getValue()
         LibManager.detectNewImportsToAcquireTypeFor(sourceCode)
 
-        if(!isJS) {
+        if(!isJS || UI.allowJSDeclarations) {
           client.getEmitOutput(userInput.uri.toString()).then(result => {
-            State.outputModel.setValue(result.outputFiles[0].text);
+            const filename = isJS ? "input.d.ts": "input.js"
+            const emitFile = result.outputFiles.find(f => f.name.includes(filename)) || result.outputFiles[0]
+
+            let outputText = emitFile.text
+            const isDefaultInJS = isJS && sourceCode.trim().length === 0
+
+            if (isDefaultInJS) outputText = "// In JS Mode for 3.7 and above, the playground will\n// show the d.ts for your JavaScript code"
+            State.outputModel.setValue(outputText);
           });
         }
       });
@@ -1212,6 +1220,11 @@ console.log(message);
   require(["vs/language/typescript/tsWorker"], () => {
     require(["vs/language/typescript/lib/typescriptServices"], () => {
       window.ts = ts
+
+      if (window.ts) {
+        const version = window.ts.versionMajorMinor.split(".")
+        UI.allowJSDeclarations = Number(version[0]) >= 3 && Number(version[1]) >= 7
+      }
     })
   })
 
