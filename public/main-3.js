@@ -1006,7 +1006,7 @@ console.log(message);
   `.trim();
     },
 
-    showModal(code) {
+    showModal(code, title, links) {
       const existingPopover = document.getElementById("popover-modal")
       if (existingPopover) existingPopover.parentElement.removeChild(existingPopover)
 
@@ -1016,6 +1016,12 @@ console.log(message);
 
       const modal = document.createElement("div")
       modal.id = "popover-modal"
+
+      if (title) {
+        const titleElement = document.createElement("p")
+        titleElement.textContent = title
+        modal.appendChild(titleElement)
+      }
 
       const pre = document.createElement("pre")
       modal.appendChild(pre)
@@ -1028,6 +1034,16 @@ console.log(message);
       const closeButton = document.createElement("button")
       closeButton.innerText = "Close"
       modal.appendChild(closeButton)
+
+      if (links) {
+        Object.keys(links).forEach(name => {
+          const href = links[name]
+          const extraButton = document.createElement("button")
+          extraButton.innerText = name
+          extraButton.onclick = () => document.location = href
+          modal.appendChild(extraButton)
+        })
+      }
 
       document.body.appendChild(modal)
 
@@ -1407,23 +1423,63 @@ console.log(message);
 
     }
 
+    function codify(code, ext) {
+      return "```" + ext + "\n" + code + "\n```\n"
+    }
+
     function makeMarkdown() {
-      return `**TypeScript ${typescriptVersion}**\n`
-        + `[Playground link](${window.location})\n`
-        + `\nCompiler Options:\n`
-        + `\`\`\`json\n${stringifiedCompilerOptions}\n\`\`\`\n`
-        + `\n**Input:**\n`
-        + `\`\`\`typescript\n${State.inputModel.getValue()}\n\`\`\`\n`
-        + `\n**Output:**\n`
-        + `\`\`\`javascript\n${State.outputModel.getValue()}\n\`\`\`\n`
-        + `\n**Expected behavior:**\n`
-        ;
+      return `
+<!-- 🚨 STOP 🚨 𝗦𝗧𝗢𝗣 🚨 𝑺𝑻𝑶𝑷 🚨
+
+Half of all issues filed here are duplicates, answered in the FAQ, or not appropriate for the bug tracker. Even if you think you've found a *bug*, please read the FAQ first, especially the Common "Bugs" That Aren't Bugs section!
+
+Please help us by doing the following steps before logging an issue:
+  * Search: https://github.com/Microsoft/TypeScript/search?type=Issues
+  * Read the FAQ: https://github.com/Microsoft/TypeScript/wiki/FAQ
+
+Please fill in the *entire* template below.
+-->
+
+**TypeScript Version:**  ${typescriptVersion}
+
+<!-- Search terms you tried before logging this (so others can find this issue more easily) -->
+**Search Terms:**
+
+**Expected behavior:**
+
+**Actual behavior:**
+
+<!-- Did you find other bugs that looked similar? -->
+**Related Issues:**
+
+**Code**
+${codify(State.inputModel.getValue(), "ts")}
+
+
+<details><summary><b>Output<b></summary>
+
+${codify(State.outputModel.getValue(), "ts")}
+
+</details>
+
+
+<details><summary><b>Compiler Options<b></summary>
+
+${codify(stringifiedCompilerOptions, "json")}
+
+</details>
+
+**Playground Link:** [Provided](${window.location})
+      `
     }
 
     function reportIssue() {
       const body = makeMarkdown();
-
-      window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
+      if (body.length < 4000) {
+        window.open('https://github.com/Microsoft/TypeScript/issues/new?body=' + encodeURIComponent(body))
+      } else {
+        UI.showModal(body, "Issue too long to post automatically, you can copy here then click below", { "Create New Issue": "https://github.com/Microsoft/TypeScript/issues/new" })
+      }
     }
 
     function copyAsMarkdownIssue() {
