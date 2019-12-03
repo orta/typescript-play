@@ -1469,14 +1469,14 @@ Please fill in the *entire* template below.
 ${codify(State.inputModel.getValue(), "ts")}
 
 
-<details><summary><b>Output<b></summary>
+<details><summary><b>Output</b></summary>
 
 ${codify(State.outputModel.getValue(), "ts")}
 
 </details>
 
 
-<details><summary><b>Compiler Options<b></summary>
+<details><summary><b>Compiler Options</b></summary>
 
 ${codify(stringifiedCompilerOptions, "json")}
 
