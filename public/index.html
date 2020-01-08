@@ -33,7 +33,10 @@ body {
     display: none; }
   .update-banner {
     padding: 3em 3em 1em 3em !important;
-    font-size: 1.1em; } }
+    font-size: 1.1em; }
+  .centered-navbar > ul.navbar-right {
+    display: none;
+  } }
 
 @media (min-width: 768px) {
 
@@ -45,7 +48,8 @@ body {
     padding: 1.6em !important;
     font-size: 1.1em;
     padding-bottom: 1em !important;
-    height: 4.4em !important; } }
+    height: 4.4em !important; } 
+}
 
 @media (min-width: 992px) {
 
@@ -321,8 +325,10 @@ img {
                     <li class=""><a href="/community/index.html">Connect</a></li>
                     <li class="active"><a href="/play/index.html">Playground</a></li>
                   </ul>
+                  <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/v2/en/play">Try Playground v3 beta</a></li>
+                  </ul>
                 </div>
-
             </div>
         </nav>
     </header>
