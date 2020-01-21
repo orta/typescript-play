@@ -771,7 +771,7 @@ async function main() {
               exampleName.classList.add("example-link")
 
               const isJS = e.name.indexOf(".js") !== -1
-              const prefix = isJS ? "useJavaScript=true" : ""
+              const prefix = isJS ? "useJavaScript=true&" : ""
 
               const hash = "example/" + e.id
               // the e: rand(200) is so that each link has a unique querystring which will force a reload, unlike the hash
@@ -1527,8 +1527,6 @@ ${codify(stringifiedCompilerOptions, "json")}
 
   window.exporter = exporter()
 }
-
-
 
 class ExampleHighlighter {
   provideLinks(model, _cancelToken) {
