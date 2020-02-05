@@ -1606,7 +1606,7 @@ function setEditorTheme(theme) {
   }
 }
 
-const blue = "3771EF";
+const blue = "3063d4";
 const darkerBlue = "1142AF";
 const darkestBlue = "09235D";
 
@@ -1614,9 +1614,9 @@ const yellow = "F3DF51";
 const darkYellow = "AEA811";
 const darkerYellow = "65610A";
 
-const grey = "84864d";
+const grey = "6d6f40";
 const green = "12CD0E";
-const greenDark = "10990D";
+const greenDark = "0d770a";
 const greenLight = "54F351";
 
 const editorThemes = {
