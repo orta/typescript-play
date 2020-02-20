@@ -1305,12 +1305,7 @@ console.log(message);
       const jsxText = getJsxEmitText(jsxOption);
       const moduleText = getModuleKindText(moduleOption);
 
-      return {
-        ...restOptions,
-        ...(targetText && {target: targetText}),
-        ...(jsxText && {jsx: jsxText}),
-        ...(moduleText && {module: moduleText}),
-      };
+      return Object.assign(restOptions, targetText && {target: targetText},jsxText && {jsx: jsxText}, moduleText && {module: moduleText})
     }
 
     // Based on https://github.com/stackblitz/core/blob/master/sdk/src/generate.ts
