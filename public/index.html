@@ -329,7 +329,7 @@ img {
                     <li class="active"><a href="/play/index.html">Playground</a></li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
-                    <li><a href="/v2/en/play">Try Playground v3 beta</a></li>
+                    <li><a id="playground-v3-link">Try Playground v3 beta</a></li>
                   </ul>
                 </div>
             </div>
@@ -472,6 +472,11 @@ img {
       // Lets you click inside the config dropdown and not have it lose focus
       $('#config').on('click', function(e) {
         e.stopPropagation();
+      });
+
+      $('#playground-v3-link').on('click', function(e) {
+        e.stopPropagation();
+        document.location = "http://www.staging-typescript.org/play" + document.location.search + document.location.hash || ""
       });
 
       // So that the CSS for a theme is applied before monaco is loaded
