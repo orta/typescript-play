@@ -118,7 +118,7 @@ subheader a {
 
 .popup-on-hover:hover .popup-header, .popup-on-hover:focus-within .popup-header {
   text-decoration: underline;
-  color: #294E80;
+  color: #000000;
 
   cursor: pointer;
 }
