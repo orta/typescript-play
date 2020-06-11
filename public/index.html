@@ -195,6 +195,9 @@ img {
 
 .navbar-default .navbar-toggle {
   border: none; }
+
+#playground-v3-link {
+  cursor: pointer; }
     </style>
   </head>
 
@@ -476,7 +479,7 @@ img {
 
       $('#playground-v3-link').on('click', function(e) {
         e.stopPropagation();
-        document.location = "http://www.staging-typescript.org/play" + document.location.search + document.location.hash || ""
+        document.location = "https://www.staging-typescript.org/play" + document.location.search + document.location.hash || ""
       });
 
       // So that the CSS for a theme is applied before monaco is loaded
