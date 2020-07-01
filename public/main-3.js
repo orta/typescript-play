@@ -643,12 +643,14 @@ async function main() {
     },
 
     selectVersion(version) {
+      const hash = `#code/${LZString.compressToEncodedURIComponent(State.inputModel.getValue())}`;
+
       if (version === window.CONFIG.getLatestVersion()) {
-        location.href = `${window.CONFIG.baseUrl}${location.hash}`;
+        location.href = `${window.CONFIG.baseUrl}${hash}`;
         return false;
       }
 
-      location.href = `${window.CONFIG.baseUrl}?ts=${version}${location.hash}`;
+      location.href = `${window.CONFIG.baseUrl}?ts=${version}${hash}`;
       return false;
     },
 
