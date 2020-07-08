@@ -963,6 +963,7 @@ async function main() {
       console.log("Updating compiler options to", compilerOptions);
       const defaults = monacoLanguageDefaults({ isJS })
       defaults.setCompilerOptions(compilerOptions)
+      defaults.setDiagnosticsOptions( Object.assign(defaults.getDiagnosticsOptions(),{ noSemanticValidation: false }))
 
       UI.updateEditorStateAfterChange()
     },
