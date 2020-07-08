@@ -130,6 +130,7 @@ const LibManager = {
       const addLibraryToRuntime = (code, path) => {
         const defaults = monacoLanguageDefaults({ isJS: path.endsWith("js") })
         defaults.addExtraLib(code, path);
+        monaco.editor.createModel(code, "javascript", monaco.Uri.file(path))
 
         globalishObj.typeDefs[path] = code
         console.log(`Adding ${path} to runtime`)
@@ -963,7 +964,6 @@ async function main() {
       console.log("Updating compiler options to", compilerOptions);
       const defaults = monacoLanguageDefaults({ isJS })
       defaults.setCompilerOptions(compilerOptions)
-      defaults.setDiagnosticsOptions( Object.assign(defaults.getDiagnosticsOptions(),{ noSemanticValidation: false }))
 
       UI.updateEditorStateAfterChange()
     },
@@ -1100,6 +1100,7 @@ console.log(message);
 
   const defaults = monacoLanguageDefaults({ isJS: window.CONFIG.useJavaScript })
   defaults.setCompilerOptions(compilerOptions)
+  defaults.setDiagnosticsOptions( Object.assign(defaults.getDiagnosticsOptions(),{ noSemanticValidation: false }))
 
   const language = languageType({ isJS:  window.CONFIG.useJavaScript })
   State.inputModel = monaco.editor.createModel(UI.getInitialCode(), language, createFile(compilerOptions));
